@@ -3,7 +3,7 @@ import cv2 as cv
 
 import doThresholding
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
 img = np.float32(img)
 img = img * 1.0/255
 orig = img.copy();
