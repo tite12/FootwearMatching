@@ -1,6 +1,8 @@
 import cv2 as cv
 import numpy as np
 import math
+from scipy import ndimage
+import pywt
 
 def blur(img) :
     return cv.medianBlur(img, 3);
@@ -12,7 +14,7 @@ def otsuThreshold(img) :
     retval, img = cv.threshold(img,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
     return img
 
-def fuyyzEnhancement(img) :
+def fuzzyEnhancement(img) :
     orig = img.copy()
     min, max, minLoc, maxLoc = cv.minMaxLoc(img)
     height, width = img.shape
@@ -97,11 +99,87 @@ def fuyyzEnhancement(img) :
             img[y, x] = img[y, x] * (max - min) + min
 
 
-    cv.imshow("img", img)
-    cv.imshow("contrast", contrastImage)
-    cv.imshow("edgeAverage", edgeAverageImg)
-    cv.imshow("amplification", amplificationImg)
-    cv.imshow("orig", orig)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # cv.imshow("img", img)
+    # cv.imshow("contrast", contrastImage)
+    # cv.imshow("edgeAverage", edgeAverageImg)
+    # cv.imshow("amplification", amplificationImg)
+    # cv.imshow("orig", orig)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
     return img
+
+def adaptiveEnhancement(img) :
+    #enhancing degree, should be between 25 and 50
+    c = 25.0
+    #enhancement range, (0,1)
+    b = 0.8
+    #wavelets
+    #TODO: get it work with the wavelets
+    # LL, (LH, HL, HH) = pywt.dwt2(img, 'bior1.3')
+    # kernel = np.array([[-1, -1, -1],
+    #                    [-1, 8, -1],
+    #                    [-1, -1, -1]])
+    # LL = ndimage.convolve(img, kernel)
+    #
+    # kernel = np.array([[-1, -1, -1, -1, -1],
+    #                    [-1, 1, 2, 1, -1],
+    #                    [-1, 2, 4, 2, -1],
+    #                    [-1, 1, 2, 1, -1],
+    #                    [-1, -1, -1, -1, -1]])
+    # LH = ndimage.convolve(img, kernel)
+    #
+    # HL = ndimage.gaussian_filter(img, 3)
+    # HH = img - HL
+    # wavelets = [LL, LH, HL, HH]
+    # thresholds = []
+    # for wavelet in wavelets :
+    #     wavelet = np.float32(wavelet)
+    #
+    #     min, max, minLoc, maxLoc = cv.minMaxLoc(wavelet)
+    #     if min < 0 :
+    #         wavelet += abs(min)
+    #     else :
+    #         wavelet -= min
+    #     min, max, minLoc, maxLoc = cv.minMaxLoc(wavelet)
+    #
+    #     wavelet = wavelet / max;
+    #
+    #     min, max, minLoc, maxLoc = cv.minMaxLoc(wavelet)
+    #
+    #     height, width = wavelet.shape
+    #     mean = cv.mean(wavelet)
+    #     coeff = 0;
+    #     for x in range(width):
+    #         for y in range(height):
+    #             coeff += pow(wavelet[y, x] - mean[0], 2)
+    #     coeff = coeff / (width * height)
+    #     coeff = math.sqrt(coeff) * 0.5
+    #     thresholds.append(coeff)
+    #
+    # cv.imshow("LL", LL)
+    # cv.imshow("LH", LH)
+    # cv.imshow("HL", HL)
+    # cv.imshow("HH", HH)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
+    thresholds = [0.2, 0.4, 0.6, 0.8]
+    thresholds.sort()
+    height, width = img.shape
+    for x in range(width):
+        for y in range(height):
+            max = 1
+            for th in thresholds :
+                if img[y, x] <= th:
+                    max = th
+                    break
+            img[y, x] = a(b, c) * max * (sigma(c * ((img[y, x] / max) - b)) - sigma(-c * ((img[y, x] / max) + b)))
+
+    return img
+
+def sigma(x) :
+    res = 1.0 / (1.0 + pow(math.e, -x))
+    return res
+
+def a(b, c) :
+    res = 1.0 / (sigma(c * (1.0-b))-sigma(-c * (1.0+b)))
+    return res
