@@ -3,24 +3,27 @@ import cv2 as cv
 
 import doThresholding
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00174.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
 img = np.float32(img)
 img = img * 1.0/255
 orig = img.copy();
+doThresholding.SMQT(img)
+
 cv.imshow("orig",img)
 img = doThresholding.fuzzyEnhancement(img)
 cv.imshow("fuzzy",img)
 img = doThresholding.adaptiveEnhancement(img)
-cv.imshow("img",img)
+cv.imshow("adaptive",img)
 
-cv.waitKey(0)
-cv.destroyAllWindows()
-# for x in range(3):
-#     img = doThresholding.blur(img)
-#     img = doThresholding.otsuThreshold(img)
-#     cv.imshow("img", img)
-#     cv.waitKey(0)
-#     cv.destroyAllWindows()
+img = img * 255
+img = img.astype(np.uint8)
+
+for x in range(1):
+    img = doThresholding.blur(img)
+    img = doThresholding.adaptiveThreshold(img)
+    cv.imshow("thresholding", img)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 ##DoG
 # g1Img = cv.GaussianBlur(img, (1, 1), 0)

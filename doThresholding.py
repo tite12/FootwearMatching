@@ -183,3 +183,52 @@ def sigma(x) :
 def a(b, c) :
     res = 1.0 / (sigma(c * (1.0-b))-sigma(-c * (1.0+b)))
     return res
+
+def SMQT(img) :
+    outputCode = np.chararray(img.shape, 9)
+    outputCode[:] = '0'
+    avg = cv.mean(img)
+    mask = np.ones(img.shape)
+    mask = mask.astype(np.uint8)
+    outputCode = SMQTrecursive(img, mask, outputCode, avg, 3)
+    height, width = img.shape
+    for x in range(width):
+        for y in range(height):
+            img[y, x] = binaryToDecimal(outputCode[y, x])
+    cv.imshow("thresholding", img)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+    return img
+
+def SMQTrecursive(img, mask, outpyCode, avg, depth) :
+    print("_________________")
+    print (depth)
+    print (avg)
+    print("-----------------")
+    if depth <= 0 :
+        return outpyCode
+    height, width = img.shape
+    mask1 = np.zeros(mask.shape)
+    mask1 = mask1.astype(np.uint8)
+    mask0 = np.zeros(mask.shape)
+    mask0 = mask0.astype(np.uint8)
+    for x in range(width):
+        for y in range(height):
+
+            if mask[y, x] == 1 :
+                if img[y, x] <= avg[0] :
+                    outpyCode[y, x] = outpyCode[y, x] + '0'
+                    mask0[y, x] = 1
+                else :
+                    outpyCode[y, x] = outpyCode[y, x] + '1'
+                    mask1[y, x] = 1
+
+    avg1 = cv.mean(img, mask1)
+    avg0 = cv.mean(img, mask0)
+    depth -= 1
+    outpyCode = SMQTrecursive(img, mask0, outpyCode, avg0, depth)
+    outpyCode = SMQTrecursive(img, mask1, outpyCode, avg1, depth)
+    return outpyCode
+
+def binaryToDecimal(n):
+    return int(n,2)
