@@ -190,21 +190,15 @@ def SMQT(img) :
     avg = cv.mean(img)
     mask = np.ones(img.shape)
     mask = mask.astype(np.uint8)
-    outputCode = SMQTrecursive(img, mask, outputCode, avg, 3)
+    outputCode = SMQTrecursive(img, mask, outputCode, avg, 8)
     height, width = img.shape
     for x in range(width):
         for y in range(height):
             img[y, x] = binaryToDecimal(outputCode[y, x])
-    cv.imshow("thresholding", img)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    img = img.astype(np.uint8)
     return img
 
 def SMQTrecursive(img, mask, outpyCode, avg, depth) :
-    print("_________________")
-    print (depth)
-    print (avg)
-    print("-----------------")
     if depth <= 0 :
         return outpyCode
     height, width = img.shape
