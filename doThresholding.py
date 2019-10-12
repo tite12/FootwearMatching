@@ -199,6 +199,7 @@ def SMQT(img) :
     return img
 
 def SMQTrecursive(img, mask, outpyCode, avg, depth) :
+    print depth
     if depth <= 0 :
         return outpyCode
     height, width = img.shape
@@ -226,3 +227,62 @@ def SMQTrecursive(img, mask, outpyCode, avg, depth) :
 
 def binaryToDecimal(n):
     return int(n,2)
+
+#img needs to be uint8
+def fastSMQT(img) :
+
+    #ordered list of possible values in am image 0-255
+    #first row is the frequency of given element
+    #second row is the sum of frequencies so far
+    #third row is the sum of all elements so far
+    occuranceMap = np.zeros((3, 256))
+    height, width = img.shape
+    #fill the frequencies
+    for x in range(width):
+        for y in range(height):
+            occuranceMap[0, img[y, x]] += 1
+    codes = dict()
+    #calculate the second and the third row of the occuranceMap
+    for x in range(256) :
+        if x == 0:
+            occuranceMap[1, x] = occuranceMap[0, x]
+        else :
+            occuranceMap[1, x] = occuranceMap[1, (x - 1)] + occuranceMap[0, x]
+            occuranceMap[2, x] = occuranceMap[2, (x - 1)] + (occuranceMap[0, x] * x)
+        codes[x] = "0"
+
+    avg = occuranceMap[2, 255] / occuranceMap[1, 255]
+    codes = fastSMQTrecursive(occuranceMap, codes, avg, 0, 255, 8)
+
+    for x in range(width):
+        for y in range(height):
+            img[y, x] = binaryToDecimal(codes[img[y, x]])
+
+    return img
+
+def fastSMQTrecursive(occuranceMap, codes, avg, valueFrom, valueTo, depth) :
+    if depth <= 0 :
+        return codes
+
+    biggestSmallerValue = -1;
+    #values from valueFrom to valueTo exluding valueTo
+    for x in range(valueFrom, valueTo + 1) :
+        if x <= avg :
+            codes[x] = codes[x] + "0"
+            if x > biggestSmallerValue and occuranceMap[0, x] > 0:
+                biggestSmallerValue = x
+        else :
+            codes[x] = codes[x] + "1"
+
+    depth -= 1
+    if biggestSmallerValue > -1 :
+        avg0 = occuranceMap[2, biggestSmallerValue] / occuranceMap[1, biggestSmallerValue]
+        if valueFrom > 0 and valueFrom != biggestSmallerValue:
+            avg0 = (occuranceMap[2, biggestSmallerValue] - occuranceMap[2, valueFrom])/ (occuranceMap[1, biggestSmallerValue] - occuranceMap[1, valueFrom])
+        codes = fastSMQTrecursive(occuranceMap, codes, avg0, valueFrom, biggestSmallerValue, depth)
+
+    #TODO: there occurs a weird runtime warning
+    avg1 = (occuranceMap[2, valueTo] - occuranceMap[2, biggestSmallerValue]) / (occuranceMap[1, valueTo] - occuranceMap[1, biggestSmallerValue])
+    codes = fastSMQTrecursive(occuranceMap, codes, avg1, biggestSmallerValue + 1, valueTo, depth)
+
+    return codes
