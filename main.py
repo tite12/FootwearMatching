@@ -1,15 +1,21 @@
 import numpy as np
 import cv2 as cv
 
+
 import doThresholding
 import histogramOperations
+import filters
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241.jpg', 0)
 
-img = doThresholding.calculateSkeleton(img)
+img = np.float32(img)
+img = img * 1.0/255
+
+# img = doThresholding.calculateSkeleton(img)
+img = filters.wiener(img)
 
 # img = histogramOperations.equalizeHistogram(img)
-cv.imshow("equalized", img)
+cv.imshow("filtered", img)
 cv.waitKey(0)
 cv.destroyAllWindows()
 
