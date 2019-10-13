@@ -286,3 +286,24 @@ def fastSMQTrecursive(occuranceMap, codes, avg, valueFrom, valueTo, depth) :
     codes = fastSMQTrecursive(occuranceMap, codes, avg1, biggestSmallerValue + 1, valueTo, depth)
 
     return codes
+
+def calculateSkeleton(img) :
+    size = np.size(img)
+    skel = np.zeros(img.shape, np.uint8)
+
+    ret, img = cv.threshold(img, 127, 255, 0)
+    element = cv.getStructuringElement(cv.MORPH_CROSS, (3, 3))
+    done = False
+
+    while (not done):
+        eroded = cv.erode(img, element)
+        temp = cv.dilate(eroded, element)
+        temp = cv.subtract(img, temp)
+        skel = cv.bitwise_or(skel, temp)
+        img = eroded.copy()
+
+        zeros = size - cv.countNonZero(img)
+        if zeros == size:
+            done = True
+
+    return skel

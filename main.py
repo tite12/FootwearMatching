@@ -2,16 +2,24 @@ import numpy as np
 import cv2 as cv
 
 import doThresholding
+import histogramOperations
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182.jpg', 0)
 
+img = doThresholding.calculateSkeleton(img)
 
-doThresholding.fastSMQT(img)
-img = np.float32(img)
-img = img * 1.0/255
-orig = img.copy();
-# returns img in format uint8
-img = doThresholding.SMQT(img)
+# img = histogramOperations.equalizeHistogram(img)
+cv.imshow("equalized", img)
+cv.waitKey(0)
+cv.destroyAllWindows()
+
+# doThresholding.fastSMQT(img)
+#
+# img = np.float32(img)
+# img = img * 1.0/255
+# orig = img.copy();
+# # returns img in format uint8
+# img = doThresholding.SMQT(img)
 
 # cv.imshow("orig",img)
 # img = doThresholding.fuzzyEnhancement(img)
