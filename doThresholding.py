@@ -3,6 +3,7 @@ import numpy as np
 import math
 from scipy import ndimage
 import pywt
+import util
 
 def blur(img) :
     return cv.medianBlur(img, 3);
@@ -15,7 +16,6 @@ def otsuThreshold(img) :
     return img
 
 def fuzzyEnhancement(img) :
-    orig = img.copy()
     min, max, minLoc, maxLoc = cv.minMaxLoc(img)
     height, width = img.shape
     for x in range(width):
@@ -230,7 +230,8 @@ def binaryToDecimal(n):
 
 #img needs to be uint8
 def fastSMQT(img) :
-
+    img = util.normalize(img, 255)
+    img = img.astype(np.uint8)
     #ordered list of possible values in am image 0-255
     #first row is the frequency of given element
     #second row is the sum of frequencies so far

@@ -5,17 +5,63 @@ import cv2 as cv
 import doThresholding
 import histogramOperations
 import filters
+import util
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233.jpg', 0)
 
 img = np.float32(img)
 img = img * 1.0/255
 
 # img = doThresholding.calculateSkeleton(img)
-img = filters.wiener(img)
+wienerFilteredImg = filters.wiener(img.copy())
+invertedWienerFiltered = 1.0-wienerFilteredImg
+wienerImg = img - invertedWienerFiltered
 
+wienerImg = util.normalize(wienerImg, 1.0)
+wienerImg = np.float32(wienerImg)
+
+fuzzyImg = doThresholding.fuzzyEnhancement(wienerImg.copy())
+adaptiveImg = doThresholding.adaptiveEnhancement(fuzzyImg.copy())
+
+adaptiveImg = util.normalize(adaptiveImg, 255)
+adaptiveImg = adaptiveImg.astype(np.uint8)
+
+# smqtImg = doThresholding.fastSMQT(adaptiveImg.copy())
+
+# faDiff = fuzzyImg - adaptiveImg
+# asdiff = adaptiveImg - smqtImg
+# asdiff = util.normalize(asdiff, 255)
+# asdiff = asdiff.astype(np.uint8)
+
+skeletonInvImg = doThresholding.calculateSkeleton(255 - adaptiveImg)
+skeletonImg = doThresholding.calculateSkeleton(adaptiveImg.copy())
+otsuThImg = doThresholding.otsuThreshold(adaptiveImg.copy())
+adaptiveThImg = doThresholding.adaptiveThreshold(adaptiveImg.copy())
+
+# diffSkeletonInvImg = doThresholding.calculateSkeleton(255 - asdiff)
+# diffSkeletonImg = doThresholding.calculateSkeleton(asdiff.copy())
+# diffOtsuThImg = doThresholding.otsuThreshold(asdiff.copy())
+# diffAdaptiveThImg = doThresholding.adaptiveThreshold(asdiff.copy())
+
+# img = 1.0 - img
 # img = histogramOperations.equalizeHistogram(img)
-cv.imshow("filtered", img)
+# cv.imshow("wiener filtered", wienerImg)
+# cv.imshow("fuzzy img", fuzzyImg)
+# cv.imshow("fuzzy-adaptive diff img", faDiff)
+# cv.imshow("adaptive img", adaptiveImg)
+# cv.imshow("adaptive SMQT diff img", asdiff)
+# cv.imshow("SMQT img", smqtImg)
+
+cv.imshow("otsu th img", otsuThImg)
+cv.imshow("adaptive th img", adaptiveThImg)
+cv.imshow("skeleton img", skeletonImg)
+cv.imshow("skeleton Inv img", skeletonInvImg)
+
+# cv.imshow("diff otsu th img", diffSkeletonInvImg)
+# cv.imshow("diff adaptive th img", diffAdaptiveThImg)
+# cv.imshow("diff skeleton img", diffSkeletonImg)
+# cv.imshow("diff skeleton Inv img", diffSkeletonInvImg)
+
 cv.waitKey(0)
 cv.destroyAllWindows()
 
