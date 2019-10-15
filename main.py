@@ -7,7 +7,39 @@ import histogramOperations
 import filters
 import util
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00232.jpg', 0)
+
+canny = cv.Canny(img,100, 100)
+# hist = histogramOperations.equalizeHistogram(img.copy())
+# smqt = doThresholding.fastSMQT(img.copy())
+#
+# norm = util.normalize(img, 1.0)
+# norm = np.float32(norm)
+#
+# fuzzyImg = doThresholding.fuzzyEnhancement(norm.copy())
+# adaptiveImg = doThresholding.adaptiveEnhancement(norm.copy())
+#
+# wiener =filters.wiener(norm.copy())
+# wiener = util.normalize(wiener, 1.0)
+# wiener = 1 - wiener
+# wiener = norm - wiener
+
+bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
+pde = filters.pde(bgrImg.copy(), 5, 0.1, 0.02)
+epf = filters.epf(bgrImg, 3, 50)
+
+cv.imshow("orig", img)
+# cv.imshow("hist", hist)
+# cv.imshow("smqt", smqt)
+# cv.imshow("fuzzy", fuzzyImg)
+# cv.imshow("adaptive", adaptiveImg)
+# cv.imshow("wiener", wiener)
+cv.imshow("Canny", canny)
+cv.imshow("pde", pde)
+cv.imshow("epf", epf)
+cv.imshow("diff", bgrImg - pde)
+cv.waitKey(0)
+cv.destroyAllWindows()
 
 img = np.float32(img)
 img = img * 1.0/255
@@ -33,8 +65,8 @@ adaptiveImg = adaptiveImg.astype(np.uint8)
 # asdiff = util.normalize(asdiff, 255)
 # asdiff = asdiff.astype(np.uint8)
 
-skeletonInvImg = doThresholding.calculateSkeleton(255 - adaptiveImg)
-skeletonImg = doThresholding.calculateSkeleton(adaptiveImg.copy())
+skeletonInvImg = doThresholding.thinning(255 - adaptiveImg)
+skeletonImg = doThresholding.thinning(adaptiveImg.copy())
 otsuThImg = doThresholding.otsuThreshold(adaptiveImg.copy())
 adaptiveThImg = doThresholding.adaptiveThreshold(adaptiveImg.copy())
 

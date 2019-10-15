@@ -50,3 +50,11 @@ def wiener(img) :
     deconvolved_img = restoration.wiener(img, psf, 1100)
     # deconvolved_img = restoration.unsupervised_wiener(img, psf)
     return deconvolved_img
+
+def pde(img, iteration = 5, step = 1.0, edgeSensitivity = 0.02):
+    dst = cv.ximgproc.anisotropicDiffusion(img, step, edgeSensitivity, iteration)
+    return dst
+
+def epf(img, kernel = 9, th = 20) :
+    dst = 	cv.ximgproc.edgePreservingFilter(img, kernel, th)
+    return dst

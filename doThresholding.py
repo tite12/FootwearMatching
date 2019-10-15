@@ -308,3 +308,7 @@ def calculateSkeleton(img) :
             done = True
 
     return skel
+
+def thinning(img) :
+    cv.ximgproc.thinning(img, img)
+    return img
