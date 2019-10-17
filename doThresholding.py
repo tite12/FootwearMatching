@@ -47,5 +47,5 @@ def calculateSkeleton(img) :
     return skel
 
 def thinning(img) :
-    cv.ximgproc.thinning(img, img)
-    return img
+    dst = cv.ximgproc.thinning(img)
+    return dst

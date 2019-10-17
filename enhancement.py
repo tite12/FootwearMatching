@@ -237,7 +237,7 @@ def fastSMQT(img) :
 
     for x in range(width):
         for y in range(height):
-            img[y, x] = binaryToDecimal(codes[img[y, x]])
+            img[y, x] = binaryToDecimal(codes[img[y, x]][0:9])
 
     return img
 
