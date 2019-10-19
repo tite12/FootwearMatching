@@ -8,13 +8,15 @@ import filters
 import util
 import enhancement
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00232.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/000.png', 0)
+
+
 
 bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
 
 norm = util.normalize(img, 1.0)
 norm = np.float32(norm)
-
+filters.regionBasedNonLocalMeans(img)
 #==============filtering=================
 pde = filters.pde(bgrImg.copy())
 img_pde = bgrImg - pde
@@ -164,7 +166,7 @@ thinHist = doThresholding.thinning(histFuzzyBi.copy())
 
 cv.imshow("orig", smqtBi)
 cv.imshow("orig Hist", histFuzzyBi)
-cv.imshow("adaptive", adaptive)
+cv.imshow("adaptive th", adaptive)
 cv.imshow("adaptive Hist", adaptiveHist)
 cv.imshow("otsu", otsu)
 cv.imshow("otsu Hist", otsuHis)
