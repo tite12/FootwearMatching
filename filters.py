@@ -1,9 +1,12 @@
 import numpy as np
 import cv2 as cv
 import math
+import util
 from matplotlib import pyplot as plt
 from skimage import restoration
 from scipy.signal import convolve2d
+
+import doThresholding
 
 def watershed(img) :
 
@@ -86,29 +89,89 @@ def regionBasedNonLocalMeans(img) :
             eigVal2 = 0.5 * (t11 + t22 - math.sqrt(pow(diff, 2) + (4 * pow(t12, 2))))
             diffImg[y, x] = abs(eigVal1 - eigVal2)
     res = np.zeros(img.shape)
+    mask = np.zeros(img.shape)
+    mask = np.uint8(mask)
     min, max, minLoc, maxLoc = cv.minMaxLoc(diffImg)
-    thresholds = [calcTh(1, min, max, 4), calcTh(2, min, max, 4), calcTh(3, min, max, 4), calcTh(4, min, max, 4)]
+    # thresholds = [calcTh(1, min, max, 4), calcTh(2, min, max, 4), calcTh(3, min, max, 4), calcTh(4, min, max, 4)]
+    thresholds = []
+    classes = 15
+    for i in range(1, classes + 1) :
+        thresholds.append(calcTh(i, min, max, classes))
+    grayVal = 255/classes
     for x in range(width):
         for y in range(height):
             currentVal = diffImg[y, x]
             index = 0
             for th in thresholds :
-                if index == 0 and currentVal < th :
-                    break
-                elif currentVal > thresholds[index-1] and currentVal < th  :
-                    print(85*index)
-                    res[y, x] = 85*index
-                    break
-                elif index == 3 :
-                    print(85 * index)
-                    res[y, x] = 85 * index
-                index += 1
 
-    min, max, minLoc, maxLoc = cv.minMaxLoc(res)
-    cv.imshow("x", res)
+                if index == 0 and currentVal < th:
+                    break
+                # res[y, x] = grayVal * index
+                setPixel(res, x, y, grayVal * index, 9)
+                setPixel(mask, x, y, 255)
+                if index > 0 and currentVal > thresholds[index-1] and currentVal < th  :
+                    break
+                index += 1
+    res = np.uint8(res)
+    mask = np.uint8(mask)
+
+    blurImg = cv.medianBlur(img, 9)
+    blured = cv.medianBlur(mask, 9)
+    for x in range(width):
+        for y in range(height):
+            if blured[y, x] == 0 :
+                blured[y, x] = 1
+    b = blurImg/blured
+    re, thresholded = cv.threshold(b, 127, 255, cv.THRESH_BINARY)
+    mixed = np.zeros(img.shape)
+    for x in range(width):
+        for y in range(height):
+            if mask[y, x] == 0 :
+                mixed[y, x] = 255
+            else :
+                mixed[y, x] = img[y, x]
+    mixed = np.uint8(mixed)
+    otsu = doThresholding.otsuThreshold(mixed)
+    # cv.imshow("b", b)
+    # cv.imshow("th", thresholded)
+    cv.imshow("mixed", mixed)
+    cv.imshow("otsu", otsu)
+    # cv.imshow("mask", mask)
+    # cv.imshow("blured mask", blured)
+    # cv.imshow("blur", blurImg)
+    # cv.imshow("res", res)
+    added = res + blurImg
+    added = util.normalize(added, 255)
+    added = np.uint8(added)
+    # cv.imshow("res+blur", added)
     cv.waitKey(0)
     cv.destroyAllWindows()
-    return
+    return res
 
 def calcTh(var, lMin, lMax, n) :
     return lMin + (var * (lMax-lMin)/n)
+
+def setPixel(img, x, y, val, nb = 5) :
+    img[y, x] = val
+    height, width = img.shape
+    if x > 0 :
+        img[y, x-1] = val
+        if nb == 9 :
+            if y > 0 :
+                img[y-1, x - 1] = val
+            if y < height - 1:
+                img[y + 1, x-1] = val
+
+    if x < width - 1 :
+        img[y, x+1] = val
+        if nb == 9:
+            if y > 0 :
+                img[y-1, x + 1] = val
+            if y < height - 1:
+                img[y + 1, x+1] = val
+
+    if y > 0 :
+        img[y - 1, x] = val
+    if y < height - 1 :
+        img[y+1, x] = val
+    return img
