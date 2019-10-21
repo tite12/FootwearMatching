@@ -128,9 +128,49 @@ def regionBasedNonLocalMeans(img) :
     for x in range(width):
         for y in range(height):
             res[y,x] = means[mapping[y, x]]
+    resLocal = np.zeros(res.shape, np.uint8)
+    n = 30
+    for x in range(width):
+        for y in range(height):
+            currentMask = np.zeros(res.shape, np.uint8)
+            roiX = 0
+            roiY = 0
+            roiWidth =0
+            roiHeight = 0
+            if x < n :
+                roiX = 0
+                roiWidth = n + x
+            else :
+                roiX = x - n
+                if x + n > width :
+                    roiWidth = n + (width - x)
+                else :
+                    roiWidth = 2 * n
+
+            if y < n :
+                roiY = 0
+                roiHeight = y + n
+            else :
+                roiY = y - n
+                if y + n > height :
+                    roiHeight = n + (height - y)
+                else :
+                    roiHeight = 2 * n
+            truncated = masks[mapping[y, x]][roiY:roiY+roiHeight, roiX:roiX+roiWidth]
+            currentMask[roiY:roiY+roiHeight, roiX:roiX+roiWidth] = truncated
+            # cv.imshow("truncated", truncated)
+            # cv.imshow("current Mask", currentMask)
+            # cv.waitKey(0)
+            # cv.destroyAllWindows()
+            mean = cv.mean(img, currentMask)
+            resLocal[y, x] = mean[0]
+
+
+
 
 
     cv.imshow("mask", mask)
+    cv.imshow("region", resLocal)
     cv.imshow("non-local mean", res)
     cv.waitKey(0)
     cv.destroyAllWindows()
