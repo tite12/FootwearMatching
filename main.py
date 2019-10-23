@@ -16,7 +16,8 @@ bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
 
 norm = util.normalize(img, 1.0)
 norm = np.float32(norm)
-filters.regionBasedNonLocalMeans(img)
+# filters.regionBasedNonLocalMeans(img)
+filters.plow(img)
 #==============filtering=================
 pde = filters.pde(bgrImg.copy())
 img_pde = bgrImg - pde

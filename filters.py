@@ -68,13 +68,13 @@ def nonLocalMeans(img) :
     dst = cv.fastNlMeansDenoising(img)
     return dst
 
-def regionBasedNonLocalMeans(img) :
+def nonLocalGrouping(img) :
     gradX = cv.Sobel(img, cv.CV_16S, 1, 0)
     gradY = cv.Sobel(img, cv.CV_16S, 0, 1)
     cv.convertScaleAbs(gradX, gradX)
     cv.convertScaleAbs(gradY, gradY)
 
-    #TODO: gaussian kernel
+    # TODO: gaussian kernel
     diffImg = np.zeros(img.shape)
     height, width = img.shape
     for x in range(width):
@@ -89,6 +89,11 @@ def regionBasedNonLocalMeans(img) :
             eigVal1 = 0.5 * (t11 + t22 + math.sqrt(pow(diff, 2) + (4 * pow(t12, 2))))
             eigVal2 = 0.5 * (t11 + t22 - math.sqrt(pow(diff, 2) + (4 * pow(t12, 2))))
             diffImg[y, x] = abs(eigVal1 - eigVal2)
+    return diffImg
+
+def regionBasedNonLocalMeans(img) :
+    diffImg = nonLocalGrouping(img)
+    height, width = img.shape
     res = np.zeros(img.shape, np.uint8)
     mask = np.zeros(img.shape, np.uint8)
     min, max, minLoc, maxLoc = cv.minMaxLoc(diffImg)
@@ -204,3 +209,50 @@ def setPixel(img, x, y, val, nb = 5) :
     if y < height - 1 :
         img[y+1, x] = val
     return img
+
+def plow(img) :
+    diffImg = nonLocalGrouping(img)
+    diffImg = diffImg.reshape((-1, 1))
+    diffImg = np.float32(diffImg)
+    # Define criteria = ( type, max_iter = 10 , epsilon = 1.0 )
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    K = 15
+    ret, label, center = cv.kmeans(diffImg, K, None, criteria, 10, cv.KMEANS_RANDOM_CENTERS)
+
+    # Now convert back into uint8, and make original image
+    center = np.uint8(center)
+    res = center[label.flatten()]
+    kMeansRes = res.reshape((img.shape))
+
+    roi = cv.selectROI("Select ROI", img)
+    cv.destroyAllWindows()
+    noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+
+    #standard deviation of noise
+    std = np.std(noiseImg)
+    h2 = 1.75 * pow(std, 2)
+
+    filtred = median(img.copy(), 5)
+    n = 11
+
+    height, width = img.shape
+
+    window = (n - 1) / 2
+    meanPatch = {}
+    filteredWithBorder = np.zeros([int(height + n), int(width + n)], np.uint32)
+    filteredWithBorder[window:height + window, window:width + window] = img
+
+    for x in range(width):
+        for y in range(height):
+            currX = x + window
+            currY = y + window
+            currentPatch = filteredWithBorder[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1) ]
+            if kMeansRes[y, x] in meanPatch :
+                meanPatch[kMeansRes[y, x]] = np.add(meanPatch[kMeansRes[y, x]], currentPatch)
+            else :
+                meanPatch[kMeansRes[y, x]] = currentPatch
+    div = width * height
+    for key in meanPatch.keys() :
+        meanPatch[key] = np.true_divide(meanPatch[key], div)
+
+    return
