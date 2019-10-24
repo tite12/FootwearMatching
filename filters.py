@@ -239,6 +239,8 @@ def plow(img) :
 
     window = (n - 1) / 2
     meanPatch = {}
+    divideWith = {}
+    #TODO: it isnd correct actually
     filteredWithBorder = np.zeros([int(height + n), int(width + n)], np.uint32)
     filteredWithBorder[window:height + window, window:width + window] = img
 
@@ -247,12 +249,20 @@ def plow(img) :
             currX = x + window
             currY = y + window
             currentPatch = filteredWithBorder[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1) ]
+            ret, divideWithCoeffs = cv.threshold(np.float32(currentPatch), 2, 1, cv.THRESH_BINARY)
             if kMeansRes[y, x] in meanPatch :
                 meanPatch[kMeansRes[y, x]] = np.add(meanPatch[kMeansRes[y, x]], currentPatch)
+                divideWith[kMeansRes[y, x]] = np.add(divideWith[kMeansRes[y, x]], divideWithCoeffs)
             else :
                 meanPatch[kMeansRes[y, x]] = currentPatch
-    div = width * height
+                divideWith[kMeansRes[y, x]] = divideWithCoeffs
     for key in meanPatch.keys() :
-        meanPatch[key] = np.true_divide(meanPatch[key], div)
+        currentPatch = meanPatch[key]
+        divideWithPatch = divideWith[key]
+        heightPatch, widthPatch = currentPatch.shape
+        for x in range(widthPatch):
+            for y in range(heightPatch):
+                currentPatch[y, x] = currentPatch[y, x] / divideWithPatch[y, x]
+        meanPatch[key] = currentPatch
 
     return
