@@ -230,6 +230,18 @@ def plow(img) :
 
     #standard deviation of noise
     std = np.std(noiseImg)
+    kernel = np.zeros((2, 2))
+    kernel[0][0] = 2
+    kernel[1][0] = -1
+    kernel[0][1] = -1
+    filtered = cv.filter2D(noiseImg, -1, kernel)
+    filtered = filtered.reshape((-1, 1))
+    filtered = filtered / math.sqrt(6)
+    delMed = np.median(filtered)
+    #TODO: What to do with this line
+    # filtered = noiseImg - delMed
+    med = np.median(filtered)
+    sigma = 1.4826 * med
     h2 = 1.75 * pow(std, 2)
 
     filtred = median(img.copy(), 5)
@@ -240,7 +252,7 @@ def plow(img) :
     window = (n - 1) / 2
     meanPatch = {}
     divideWith = {}
-    #TODO: it isnd correct actually
+    covarianceSamples = {}
     filteredWithBorder = np.zeros([int(height + n), int(width + n)], np.uint32)
     filteredWithBorder[window:height + window, window:width + window] = img
 
@@ -253,9 +265,24 @@ def plow(img) :
             if kMeansRes[y, x] in meanPatch :
                 meanPatch[kMeansRes[y, x]] = np.add(meanPatch[kMeansRes[y, x]], currentPatch)
                 divideWith[kMeansRes[y, x]] = np.add(divideWith[kMeansRes[y, x]], divideWithCoeffs)
+                covHeight = -1
+                covWidth = -1
+                if (kMeansRes[y, x] in covarianceSamples) :
+                    covHeight, covWidth = covarianceSamples[kMeansRes[y, x]].shape
+                if ( covWidth < n and currX > 2 * window and currX < width - (2 * window) and currY > 2 * window and currY < height - (2 * window)) :
+                    currentPatch = currentPatch.reshape((-1, 1))
+                    if kMeansRes[y, x] in covarianceSamples :
+                        covarianceSamples[kMeansRes[y, x]] = np.hstack((covarianceSamples[kMeansRes[y, x]], currentPatch))
+                        # covariances[kMeansRes[y, x]] = np.append(covariances[kMeansRes[y, x]], currentPatch, 1)
+                    else :
+                        covarianceSamples[kMeansRes[y, x]]   = currentPatch
             else :
                 meanPatch[kMeansRes[y, x]] = currentPatch
                 divideWith[kMeansRes[y, x]] = divideWithCoeffs
+                if (currX > 2 * window and currX < width - (2 * window) and currY > 2 * window and currY < height - (2 * window)) :
+                    currentPatch = currentPatch.reshape((-1, 1))
+                    covarianceSamples[kMeansRes[y, x]] = currentPatch
+    covariances = {}
     for key in meanPatch.keys() :
         currentPatch = meanPatch[key]
         divideWithPatch = divideWith[key]
@@ -264,5 +291,9 @@ def plow(img) :
             for y in range(heightPatch):
                 currentPatch[y, x] = currentPatch[y, x] / divideWithPatch[y, x]
         meanPatch[key] = currentPatch
+
+        meanOut = np.zeros(covarianceSamples[key].shape)
+        test, test2 = cv.calcCovarMatrix(np.float32(covarianceSamples[key]), np.float32(meanOut), cv.COVAR_NORMAL | cv.COVAR_COLS)
+        covariances[key] = test
 
     return
