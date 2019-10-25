@@ -248,7 +248,7 @@ def plow(img) :
     filtred = median(img.copy(), 5)
     n = 11
 
-    identity = pow(sigma, 2) * np.identity(n * n)
+    identity = pow(sigma, 2) * np.identity(n)
     height, width = img.shape
 
     window = (n - 1) / 2
@@ -257,6 +257,7 @@ def plow(img) :
     covarianceSamples = {}
     filteredWithBorder = np.zeros([int(height + n), int(width + n)], np.uint32)
     filteredWithBorder[window:height + window, window:width + window] = img
+    imgWithBorder = filteredWithBorder
 
     for x in range(width):
         for y in range(height):
@@ -284,6 +285,16 @@ def plow(img) :
                 if (currX > 2 * window and currX < width - (2 * window) and currY > 2 * window and currY < height - (2 * window)) :
                     currentPatch = currentPatch.reshape((-1, 1))
                     covarianceSamples[kMeansRes[y, x]] = currentPatch
+
+    toDel = []
+    for i in covarianceSamples :
+        covheight, covwidth = covarianceSamples[i].shape
+        if covwidth < n :
+            toDel.append(i)
+    for i  in np.nditer(toDel) :
+        del covarianceSamples[toDel[i]]
+        del meanPatch[toDel[i]]
+
     covariances = {}
     for key in meanPatch.keys() :
         currentPatch = meanPatch[key]
@@ -295,7 +306,7 @@ def plow(img) :
         meanPatch[key] = currentPatch
 
         meanOut = np.zeros(covarianceSamples[key].shape)
-        covMat, test2 = cv.calcCovarMatrix(np.float32(covarianceSamples[key]), np.float32(meanOut), cv.COVAR_NORMAL | cv.COVAR_COLS)
+        covMat, test2 = cv.calcCovarMatrix(np.float32(covarianceSamples[key]), np.float32(meanOut), cv.COVAR_NORMAL | cv.COVAR_ROWS)
         covMat = covMat - identity
         eigenVals, eigenVect = la.eig(covMat)
         for x in range(eigenVals.size) :
@@ -304,5 +315,89 @@ def plow(img) :
         eigenVals = np.real(eigenVals)
         eigenVect = np.real(eigenVect)
         covariances[key] = eigenVect * eigenVals * np.transpose(eigenVect)
+
+    resultImg = np.zeros(imgWithBorder.shape, np.uint64)
+    divideWith = np.zeros(filteredWithBorder.shape, np.uint64)
+
+    similarPatches = {}
+    #half of the actual size
+    searchWindow = 15
+    threshold = 10
+    for x in range(width):
+        for y in range(height):
+            currX = x + window
+            currY = y + window
+            currClass = kMeansRes[y, x]
+            currentPatch = filteredWithBorder[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1) ]
+
+
+            weights = []
+            patches = []
+            meanPatch = np.zeros(currentPatch.shape)
+            divideWithCoeffs = 0
+            sumWeights = 0
+            for k in range(width):
+                if k < x - searchWindow :
+                    continue
+                if k > x + searchWindow :
+                    break
+                for l in range(height):
+                    if l <  y - searchWindow :
+                        continue
+                    if l > y + searchWindow :
+                        break
+                    if (k != x and l != y and kMeansRes[l, k] == currClass) :
+                        currK = k + window
+                        currL = l + window
+                        comparePatch = filteredWithBorder[int(currL - window) : int(currL + window + 1), int(currK - window) : int(currK + window + 1) ]
+
+                        patchHeight, patchWidth = comparePatch.shape
+                        for patchX in range(patchWidth):
+                            for patchY in range(patchHeight):
+                                if comparePatch[patchY, patchX] == 0 :
+                                    comparePatch[patchY, patchX] = currentPatch[patchY, patchX]
+                                elif currentPatch[patchY, patchX] == 0 :
+                                    currentPatch[patchY, patchX] = comparePatch[patchY, patchX]
+
+                        truePatch = imgWithBorder[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1) ]
+                        ret, divideWith = cv.threshold(np.float32(truePatch), 2, 1, cv.THRESH_BINARY)
+                        meanPatch = meanPatch + truePatch
+                        divideWithCoeffs = divideWithCoeffs + divideWith
+                        weight = np.zeros(comparePatch.shape, np.int64)
+                        for patchX in range(patchWidth):
+                            for patchY in range(patchHeight):
+                                val1 = currentPatch[patchY, patchX]
+                                val1 = val1.astype(np.int32)
+                                val2 = comparePatch[patchY, patchX]
+                                val2 = val2.astype(np.int32)
+                                test = pow(val1 - val2, 2)
+                                weight[patchY, patchX] =  math.exp(- test/ h2)
+                        weight = (1 / pow(sigma, 2)) * weight
+                        weight = weight.reshape((-1, 1))
+                        weights.append(weight)
+                        sumWeights = sumWeights + weight
+                        patches.append(comparePatch.reshape((-1, 1)))
+
+            firstSum = 0
+            secondSum = 0
+            meanPatch = meanPatch /divideWithCoeffs
+            meanPatch = meanPatch.reshape((-1, 1))
+            mat = la.inv(sumWeights * covariances[currClass] + np.identity(n * n))
+            for i in range(len(weights)) :
+                firstSum = firstSum + ((weights[i] * patches[i]) / sumWeights)
+                firstTerm = (weights[i] / sumWeights )
+                thirdTerm = meanPatch - patches[i]
+                secondSum = secondSum + firstTerm * mat * thirdTerm
+            newPatch = firstSum.reshape(mat.shape) + secondSum
+            currentPatch = resultImg[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1) ]
+            newPatch = newPatch.reshape((currentPatch.shape))
+            newPatch = newPatch + currentPatch
+            resultImg[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1)] = newPatch
+
+
+    cv.imshow("whats this", resultImg)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
 
     return
