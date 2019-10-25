@@ -5,6 +5,7 @@ import util
 from matplotlib import pyplot as plt
 from skimage import restoration
 from scipy.signal import convolve2d
+from numpy import linalg as la
 
 import histogramOperations
 import doThresholding
@@ -238,15 +239,16 @@ def plow(img) :
     filtered = filtered.reshape((-1, 1))
     filtered = filtered / math.sqrt(6)
     delMed = np.median(filtered)
-    #TODO: What to do with this line
+    delMed = abs(delMed)
     # filtered = noiseImg - delMed
-    med = np.median(filtered)
+    med = np.median(delMed)
     sigma = 1.4826 * med
-    h2 = 1.75 * pow(std, 2)
+    h2 = 1.75 * pow(sigma, 2)
 
     filtred = median(img.copy(), 5)
     n = 11
 
+    identity = pow(sigma, 2) * np.identity(n * n)
     height, width = img.shape
 
     window = (n - 1) / 2
@@ -293,7 +295,14 @@ def plow(img) :
         meanPatch[key] = currentPatch
 
         meanOut = np.zeros(covarianceSamples[key].shape)
-        test, test2 = cv.calcCovarMatrix(np.float32(covarianceSamples[key]), np.float32(meanOut), cv.COVAR_NORMAL | cv.COVAR_COLS)
-        covariances[key] = test
+        covMat, test2 = cv.calcCovarMatrix(np.float32(covarianceSamples[key]), np.float32(meanOut), cv.COVAR_NORMAL | cv.COVAR_COLS)
+        covMat = covMat - identity
+        eigenVals, eigenVect = la.eig(covMat)
+        for x in range(eigenVals.size) :
+            if eigenVals[x] < 0 :
+                eigenVals[x] = 0.0001
+        eigenVals = np.real(eigenVals)
+        eigenVect = np.real(eigenVect)
+        covariances[key] = eigenVect * eigenVals * np.transpose(eigenVect)
 
     return
