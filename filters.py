@@ -237,13 +237,21 @@ def plow(img) :
     kernel[0][1] = -1
     filtered = cv.filter2D(noiseImg, -1, kernel)
     filtered = filtered.reshape((-1, 1))
+    filtered = np.float32(filtered)
     filtered = filtered / math.sqrt(6)
     delMed = np.median(filtered)
+    while delMed == 0 :
+        min, max, minLoc, maxLoc = cv.minMaxLoc(filtered)
+        x = minLoc[0]
+        y = minLoc[1]
+        filtered[y, x] = max + 1
+        delMed = np.median(filtered)
     delMed = abs(delMed)
     # filtered = noiseImg - delMed
     med = np.median(delMed)
     sigma = 1.4826 * med
-    sigma = 0.6052689154417233
+    if sigma == 0 :
+        return
     h2 = 1.75 * pow(sigma, 2)
     filtred = median(img.copy(), 5)
     n = 5
@@ -376,11 +384,7 @@ def plow(img) :
                                 test = math.exp(- test/ h2)
                                 weight[patchY, patchX] = test
                         val = (1 / pow(sigma, 2))
-                        if np.isnan(weight).any() :
-                            print("im here")
                         weight = val * weight
-                        if np.isnan(weight).any() :
-                            print("im here")
                         # weight = weight.reshape((-1, 1))
                         weights.append(weight)
                         sumWeights = sumWeights + weight
@@ -391,19 +395,13 @@ def plow(img) :
             meanPatch = meanPatch /divideWithCoeffs
             # meanPatch = meanPatch.reshape((-1, 1))
             mat = la.inv(sumWeights * covariances[currClass] + np.identity(n))
-            if currX == 12 and currY == 21 :
-                    print ("im here")
             for i in range(len(weights)) :
                 wp = (weights[i] * patches[i])
                 ws = wp / sumWeights
                 firstSum = firstSum + ws
-                if np.isnan(firstSum).any():
-                    print("im here")
                 firstTerm = (weights[i] / sumWeights )
                 thirdTerm = meanPatch - patches[i]
                 secondSum = secondSum + firstTerm * mat * thirdTerm
-                if np.isnan(secondSum).any():
-                    print("im here")
             newPatch = firstSum + secondSum
             currentPatch = resultImg[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1) ]
             newPatch = newPatch + currentPatch
@@ -412,10 +410,7 @@ def plow(img) :
 
     resultImg = util.normalize(resultImg.copy(), 255)
     cv.imshow("whats this", resultImg)
-    cv.imwrite("C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182ref1.jpg", resultImg)
-
-    cv.imshow("whats that", resultImg)
-    cv.imwrite("C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182ref2.jpg", resultImg)
+    cv.imwrite("C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204oref.jpg", resultImg)
 
     cv.waitKey(0)
     cv.destroyAllWindows()

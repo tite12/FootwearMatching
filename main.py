@@ -8,7 +8,7 @@ import filters
 import util
 import enhancement
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182ref.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
 
 
 
