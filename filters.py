@@ -243,16 +243,16 @@ def plow(img) :
     # filtered = noiseImg - delMed
     med = np.median(delMed)
     sigma = 1.4826 * med
+    sigma = 0.6052689154417233
     h2 = 1.75 * pow(sigma, 2)
-
     filtred = median(img.copy(), 5)
-    n = 11
+    n = 5
 
     identity = pow(sigma, 2) * np.identity(n)
     height, width = img.shape
 
     window = (n - 1) / 2
-    meanPatch = {}
+    meanPatches = {}
     divideWith = {}
     covarianceSamples = {}
     filteredWithBorder = np.zeros([int(height + n), int(width + n)], np.uint32)
@@ -265,8 +265,8 @@ def plow(img) :
             currY = y + window
             currentPatch = filteredWithBorder[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1) ]
             ret, divideWithCoeffs = cv.threshold(np.float32(currentPatch), 2, 1, cv.THRESH_BINARY)
-            if kMeansRes[y, x] in meanPatch :
-                meanPatch[kMeansRes[y, x]] = np.add(meanPatch[kMeansRes[y, x]], currentPatch)
+            if kMeansRes[y, x] in meanPatches :
+                meanPatches[kMeansRes[y, x]] = np.add(meanPatches[kMeansRes[y, x]], currentPatch)
                 divideWith[kMeansRes[y, x]] = np.add(divideWith[kMeansRes[y, x]], divideWithCoeffs)
                 covHeight = -1
                 covWidth = -1
@@ -280,7 +280,7 @@ def plow(img) :
                     else :
                         covarianceSamples[kMeansRes[y, x]]   = currentPatch
             else :
-                meanPatch[kMeansRes[y, x]] = currentPatch
+                meanPatches[kMeansRes[y, x]] = currentPatch
                 divideWith[kMeansRes[y, x]] = divideWithCoeffs
                 if (currX > 2 * window and currX < width - (2 * window) and currY > 2 * window and currY < height - (2 * window)) :
                     currentPatch = currentPatch.reshape((-1, 1))
@@ -291,19 +291,19 @@ def plow(img) :
         covheight, covwidth = covarianceSamples[i].shape
         if covwidth < n :
             toDel.append(i)
-    for i  in np.nditer(toDel) :
-        del covarianceSamples[toDel[i]]
-        del meanPatch[toDel[i]]
+    for i  in list(toDel) :
+        del covarianceSamples[i]
+        del meanPatches[i]
 
     covariances = {}
-    for key in meanPatch.keys() :
-        currentPatch = meanPatch[key]
+    for key in meanPatches.keys() :
+        currentPatch = meanPatches[key]
         divideWithPatch = divideWith[key]
         heightPatch, widthPatch = currentPatch.shape
         for x in range(widthPatch):
             for y in range(heightPatch):
                 currentPatch[y, x] = currentPatch[y, x] / divideWithPatch[y, x]
-        meanPatch[key] = currentPatch
+        meanPatches[key] = currentPatch
 
         meanOut = np.zeros(covarianceSamples[key].shape)
         covMat, test2 = cv.calcCovarMatrix(np.float32(covarianceSamples[key]), np.float32(meanOut), cv.COVAR_NORMAL | cv.COVAR_ROWS)
@@ -321,21 +321,23 @@ def plow(img) :
 
     similarPatches = {}
     #half of the actual size
-    searchWindow = 15
-    threshold = 10
+    searchWindow = 5
     for x in range(width):
+    # for x in range(10, 11):
         for y in range(height):
             currX = x + window
             currY = y + window
             currClass = kMeansRes[y, x]
+            if currClass not in meanPatches :
+                continue
             currentPatch = filteredWithBorder[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1) ]
 
 
             weights = []
             patches = []
             meanPatch = np.zeros(currentPatch.shape)
-            divideWithCoeffs = 0
-            sumWeights = 0
+            divideWithCoeffs = np.ones(currentPatch.shape)
+            sumWeights = np.ones(currentPatch.shape)
             for k in range(width):
                 if k < x - searchWindow :
                     continue
@@ -363,7 +365,7 @@ def plow(img) :
                         ret, divideWith = cv.threshold(np.float32(truePatch), 2, 1, cv.THRESH_BINARY)
                         meanPatch = meanPatch + truePatch
                         divideWithCoeffs = divideWithCoeffs + divideWith
-                        weight = np.zeros(comparePatch.shape, np.int64)
+                        weight = np.zeros(comparePatch.shape, np.float32)
                         for patchX in range(patchWidth):
                             for patchY in range(patchHeight):
                                 val1 = currentPatch[patchY, patchX]
@@ -371,31 +373,50 @@ def plow(img) :
                                 val2 = comparePatch[patchY, patchX]
                                 val2 = val2.astype(np.int32)
                                 test = pow(val1 - val2, 2)
-                                weight[patchY, patchX] =  math.exp(- test/ h2)
-                        weight = (1 / pow(sigma, 2)) * weight
-                        weight = weight.reshape((-1, 1))
+                                test = math.exp(- test/ h2)
+                                weight[patchY, patchX] = test
+                        val = (1 / pow(sigma, 2))
+                        if np.isnan(weight).any() :
+                            print("im here")
+                        weight = val * weight
+                        if np.isnan(weight).any() :
+                            print("im here")
+                        # weight = weight.reshape((-1, 1))
                         weights.append(weight)
                         sumWeights = sumWeights + weight
-                        patches.append(comparePatch.reshape((-1, 1)))
+                        patches.append(comparePatch)
 
             firstSum = 0
             secondSum = 0
             meanPatch = meanPatch /divideWithCoeffs
-            meanPatch = meanPatch.reshape((-1, 1))
-            mat = la.inv(sumWeights * covariances[currClass] + np.identity(n * n))
+            # meanPatch = meanPatch.reshape((-1, 1))
+            mat = la.inv(sumWeights * covariances[currClass] + np.identity(n))
+            if currX == 12 and currY == 21 :
+                    print ("im here")
             for i in range(len(weights)) :
-                firstSum = firstSum + ((weights[i] * patches[i]) / sumWeights)
+                wp = (weights[i] * patches[i])
+                ws = wp / sumWeights
+                firstSum = firstSum + ws
+                if np.isnan(firstSum).any():
+                    print("im here")
                 firstTerm = (weights[i] / sumWeights )
                 thirdTerm = meanPatch - patches[i]
                 secondSum = secondSum + firstTerm * mat * thirdTerm
-            newPatch = firstSum.reshape(mat.shape) + secondSum
+                if np.isnan(secondSum).any():
+                    print("im here")
+            newPatch = firstSum + secondSum
             currentPatch = resultImg[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1) ]
-            newPatch = newPatch.reshape((currentPatch.shape))
             newPatch = newPatch + currentPatch
             resultImg[int(currY - window) : int(currY + window + 1), int(currX - window) : int(currX + window + 1)] = newPatch
+        print (x)
 
-
+    resultImg = util.normalize(resultImg.copy(), 255)
     cv.imshow("whats this", resultImg)
+    cv.imwrite("C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182ref1.jpg", resultImg)
+
+    cv.imshow("whats that", resultImg)
+    cv.imwrite("C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182ref2.jpg", resultImg)
+
     cv.waitKey(0)
     cv.destroyAllWindows()
 
