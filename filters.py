@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from skimage import restoration
 from scipy.signal import convolve2d
 from numpy import linalg as la
+from scipy.spatial import distance
 
 import histogramOperations
 import doThresholding
@@ -174,12 +175,12 @@ def regionBasedNonLocalMeans(img) :
 
 
 
-
-    cv.imshow("mask", mask)
-    cv.imshow("region", resLocal)
-    cv.imshow("non-local mean", res)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    #
+    # cv.imshow("mask", mask)
+    # cv.imshow("region", resLocal)
+    # cv.imshow("non-local mean", res)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
 
     return res
 
@@ -331,7 +332,6 @@ def plow(img) :
     #half of the actual size
     searchWindow = 5
     for x in range(width):
-    # for x in range(10, 11):
         for y in range(height):
             currX = x + window
             currY = y + window
@@ -409,11 +409,92 @@ def plow(img) :
         print (x)
 
     resultImg = util.normalize(resultImg.copy(), 255)
-    cv.imshow("whats this", resultImg)
-    cv.imwrite("C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204oref.jpg", resultImg)
+    resultImg = np.uint8(resultImg)
 
+    return resultImg
+
+def eliminateNoise(img, noiseImg, th) :
+    height, width = img.shape
+    heightNoise, widthNoise = noiseImg.shape
+    if heightNoise % 2 == 0 :
+        heightNoise = heightNoise - 1
+    if widthNoise % 2 == 0 :
+        widthNoise = widthNoise - 1
+    noiseImg = noiseImg[0 : heightNoise, 0 :widthNoise]
+    windowX = (widthNoise - 1) / 2
+    windowY = (heightNoise - 1) / 2
+    smoothingMask = np.zeros(img.shape, np.float32)
+
+    xComparePatch = windowX - 1
+    for x in range(width):
+        xMin = max(0, x - windowX)
+        xMax = min(width, x + windowX)
+
+        yComparePatch = windowY - 1
+        for y in range(height):
+            yMin = max(0, y - windowY)
+            yMax = min(height, y + windowY)
+
+            patch = img[yMin : yMax + 1, xMin : xMax + 1]
+            heightPatch, widthPatch = patch.shape
+            comparePatch = noiseImg[yComparePatch:yComparePatch + heightPatch, xComparePatch:xComparePatch + widthPatch]
+            # l2 = patch - comparePatch
+            # for m in range(widthPatch) :
+            #     for n in range(heightPatch) :
+            #         l2[n, m] = math.sqrt(pow(l2[n, m], 2))
+            # l2 = np.mean(l2)
+            # l2 = la.norm(patch - comparePatch)
+            l2 = distance.euclidean(patch.reshape((-1, 1)), comparePatch.reshape((-1, 1)))
+            smoothingMask[y, x] = l2
+
+            if yComparePatch > 0 :
+                yComparePatch = yComparePatch - 1
+            # if yMax == height - 1 :
+            #     break
+        if xComparePatch > 0 :
+            xComparePatch = xComparePatch - 1
+        # if xMax == width - 1 :
+        #     break
+
+    smoothingMask = util.normalize(smoothingMask, 255)
+    smoothingMask = np.uint8(smoothingMask)
+    smoothingMask = histogramOperations.equalizeHistogram(smoothingMask)
+    smoothingMask = util.normalize(smoothingMask, 1)
+    res = smoothingMask * img
+    res = np.uint8(res)
+
+    norm = util.normalize(img, 1.0)
+    norm = np.float32(norm)
+    blured = wiener(norm)
+    blured = util.normalize(blured, 255)
+    blured = np.uint8(blured)
+    comp = np.zeros(img.shape)
+    for x in range(width):
+        for y in range(height):
+            smootingTerm = smoothingMask[y, x]
+            comp[y, x] = smootingTerm  * img[y, x] + (1 - smootingTerm) * blured[y, x]
+    comp = util.normalize(comp, 255)
+    comp = np.uint8(comp)
+
+    th = np.median(smoothingMask)
+    _, th = cv.threshold(smoothingMask, th, 1, cv.THRESH_BINARY)
+    mix = np.zeros(img.shape)
+    for x in range(width):
+        for y in range(height):
+            if th[y, x] == 1 :
+                mix[y, x] = smootingTerm * img[y, x] + (1 - smootingTerm) * blured[y, x]
+            else :
+                mix[y, x] = blured[y, x]
+    mix = util.normalize(mix, 255)
+    mix = np.uint8(mix)
+
+    cv.imshow("res", res)
+    cv.imshow("comp", comp)
+    cv.imshow("mix", mix)
+    cv.imshow("blur", blured)
+    cv.imshow("mask", smoothingMask)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
+    return comp
 
-    return

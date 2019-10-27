@@ -8,16 +8,29 @@ import filters
 import util
 import enhancement
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241.jpg', 0)
 
+roi = cv.selectROI("Select noise area", img)
+# cv.destroyAllWindows()
+noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
+img = filters.eliminateNoise(img, noiseImg, 0.1)
+
+cv.imshow("denoised", img)
 
 bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
 
 norm = util.normalize(img, 1.0)
 norm = np.float32(norm)
-# filters.regionBasedNonLocalMeans(img)
-filters.plow(img)
+nonLocalMeans = filters.regionBasedNonLocalMeans(img)
+
+cv.imshow("non-local mean", nonLocalMeans)
+equal = histogramOperations.equalizeHistogram(nonLocalMeans)
+cv.imshow("equalized non-local mean", equal)
+cv.waitKey(0)
+cv.destroyAllWindows()
+
+# filters.plow(img)
 #==============filtering=================
 pde = filters.pde(bgrImg.copy())
 img_pde = bgrImg - pde
