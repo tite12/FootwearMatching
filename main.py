@@ -7,197 +7,202 @@ import histogramOperations
 import filters
 import util
 import enhancement
+import LBP
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241.jpg', 0)
+firstVersionPreprocessing = False
 
-roi = cv.selectROI("Select noise area", img)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182ref.jpg', 0)
+
+# roi = cv.selectROI("Select noise area", img)
+# # cv.destroyAllWindows()
+# noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+#
+# img = filters.eliminateNoise(img, noiseImg, 0.1)
+#
+# cv.imshow("denoised", img)
+#
+# nonLocalMeans = filters.regionBasedNonLocalMeans(img)
+#
+# cv.imshow("non-local mean", nonLocalMeans)
+# equal = histogramOperations.equalizeHistogram(nonLocalMeans)
+# cv.imshow("equalized non-local mean", equal)
+# cv.waitKey(0)
 # cv.destroyAllWindows()
-noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-img = filters.eliminateNoise(img, noiseImg, 0.1)
+LBP.classifiy(img, 9, 24, 8)
 
-cv.imshow("denoised", img)
+if (firstVersionPreprocessing) :
+    bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
 
-bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
+    norm = util.normalize(img, 1.0)
+    norm = np.float32(norm)
+    #==============filtering=================
+    pde = filters.pde(bgrImg.copy())
+    img_pde = bgrImg - pde
 
-norm = util.normalize(img, 1.0)
-norm = np.float32(norm)
-nonLocalMeans = filters.regionBasedNonLocalMeans(img)
+    epf = filters.epf(bgrImg.copy())
+    img_epf = bgrImg - epf
 
-cv.imshow("non-local mean", nonLocalMeans)
-equal = histogramOperations.equalizeHistogram(nonLocalMeans)
-cv.imshow("equalized non-local mean", equal)
-cv.waitKey(0)
-cv.destroyAllWindows()
+    median5 = filters.median(img.copy(), 5)
+    median9 = filters.median(img.copy(), 9)
+    img_med5 = img - median5
+    img_med9 = img - median9
 
-# filters.plow(img)
-#==============filtering=================
-pde = filters.pde(bgrImg.copy())
-img_pde = bgrImg - pde
+    bi5 = filters.bilateralFilter(img.copy(), 5)
+    bi9 = filters.bilateralFilter(img.copy(), 9)
+    img_bi5 = img - bi5
+    img_bi9 = img - bi9
 
-epf = filters.epf(bgrImg.copy())
-img_epf = bgrImg - epf
+    wiener = filters.wiener(norm.copy())
+    img_wiener = norm - wiener
+    img_wiener = util.normalize(img_wiener, 255.0)
+    img_wiener = img_wiener.astype(np.uint8)
 
-median5 = filters.median(img.copy(), 5)
-median9 = filters.median(img.copy(), 9)
-img_med5 = img - median5
-img_med9 = img - median9
+    normBi5 = util.normalize(bi5.copy(), 1.0)
+    normBi5 = np.float32(normBi5)
 
-bi5 = filters.bilateralFilter(img.copy(), 5)
-bi9 = filters.bilateralFilter(img.copy(), 9)
-img_bi5 = img - bi5
-img_bi9 = img - bi9
+    img_wienerBi5 = normBi5 - wiener
+    img_wienerBi5 = util.normalize(img_wienerBi5.copy(), 255.0)
+    img_wienerBi5 = img_wienerBi5.astype(np.uint8)
 
-wiener = filters.wiener(norm.copy())
-img_wiener = norm - wiener
-img_wiener = util.normalize(img_wiener, 255.0)
-img_wiener = img_wiener.astype(np.uint8)
+    cv.imshow("orig", img)
+    cv.imshow("img-wiener", img_wiener)
+    cv.imshow("wiener", wiener)
+    cv.imshow("img-wienerBi5", img_wienerBi5)
+    cv.imshow("img-pde", img_pde)
+    cv.imshow("pde", pde)
+    cv.imshow("img-epf", img_epf)
+    cv.imshow("epf", epf)
+    cv.imshow("img-med5", img_med5)
+    cv.imshow("med5", median5)
+    cv.imshow("img-med9", img_med9)
+    cv.imshow("med9", median9)
+    cv.imshow("img-bi5", img_bi5)
+    cv.imshow("bi5", bi5)
+    cv.imshow("img-bi9", img_bi9)
+    cv.imshow("bi9", bi9)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
-normBi5 = util.normalize(bi5.copy(), 1.0)
-normBi5 = np.float32(normBi5)
+    #=============enhancement====================
+    norm = util.normalize(img_wiener.copy(), 1.0)
+    norm = np.float32(norm)
+    normBi = util.normalize(img_wienerBi5.copy(), 1.0)
+    normBi = np.float32(normBi)
 
-img_wienerBi5 = normBi5 - wiener
-img_wienerBi5 = util.normalize(img_wienerBi5.copy(), 255.0)
-img_wienerBi5 = img_wienerBi5.astype(np.uint8)
+    smqt = enhancement.fastSMQT(img_wiener.copy())
+    smqtBi = enhancement.fastSMQT(img_wienerBi5.copy())
 
-cv.imshow("orig", img)
-cv.imshow("img-wiener", img_wiener)
-cv.imshow("wiener", wiener)
-cv.imshow("img-wienerBi5", img_wienerBi5)
-cv.imshow("img-pde", img_pde)
-cv.imshow("pde", pde)
-cv.imshow("img-epf", img_epf)
-cv.imshow("epf", epf)
-cv.imshow("img-med5", img_med5)
-cv.imshow("med5", median5)
-cv.imshow("img-med9", img_med9)
-cv.imshow("med9", median9)
-cv.imshow("img-bi5", img_bi5)
-cv.imshow("bi5", bi5)
-cv.imshow("img-bi9", img_bi9)
-cv.imshow("bi9", bi9)
-cv.waitKey(0)
-cv.destroyAllWindows()
+    fuzzy = enhancement.fuzzyEnhancement(norm.copy())
+    fuzzyBi = enhancement.fuzzyEnhancement(normBi.copy())
 
-#=============enhancement====================
-norm = util.normalize(img_wiener.copy(), 1.0)
-norm = np.float32(norm)
-normBi = util.normalize(img_wienerBi5.copy(), 1.0)
-normBi = np.float32(normBi)
+    adaptive = enhancement.adaptiveEnhancement(norm.copy())
+    adaptiveBi = enhancement.adaptiveEnhancement(normBi.copy())
 
-smqt = enhancement.fastSMQT(img_wiener.copy())
-smqtBi = enhancement.fastSMQT(img_wienerBi5.copy())
+    normFuzzy = util.normalize(fuzzy.copy(), 1.0)
+    normFuzzy = np.float32(normFuzzy)
+    normFuzzyBi = util.normalize(fuzzyBi.copy(), 1.0)
+    normFuzzyBi = np.float32(normFuzzyBi)
 
-fuzzy = enhancement.fuzzyEnhancement(norm.copy())
-fuzzyBi = enhancement.fuzzyEnhancement(normBi.copy())
+    adaptiveAndFuzzy = enhancement.adaptiveEnhancement(normFuzzy.copy())
+    adaptiveAndFuzzyBi = enhancement.adaptiveEnhancement(normFuzzyBi.copy())
 
-adaptive = enhancement.adaptiveEnhancement(norm.copy())
-adaptiveBi = enhancement.adaptiveEnhancement(normBi.copy())
+    normSMQT = util.normalize(smqt.copy(), 1.0)
+    normSMQT = np.float32(normSMQT)
+    normSMQTBi = util.normalize(smqtBi.copy(), 1.0)
+    normSMQTBi = np.float32(normSMQTBi)
 
-normFuzzy = util.normalize(fuzzy.copy(), 1.0)
-normFuzzy = np.float32(normFuzzy)
-normFuzzyBi = util.normalize(fuzzyBi.copy(), 1.0)
-normFuzzyBi = np.float32(normFuzzyBi)
+    smqtAndFuzzy = enhancement.adaptiveEnhancement(normSMQT.copy())
+    smqtAndFuzzyBi = enhancement.adaptiveEnhancement(normSMQTBi.copy())
 
-adaptiveAndFuzzy = enhancement.adaptiveEnhancement(normFuzzy.copy())
-adaptiveAndFuzzyBi = enhancement.adaptiveEnhancement(normFuzzyBi.copy())
+    hist = histogramOperations.equalizeHistogram(img_wiener.copy())
+    histBi = histogramOperations.equalizeHistogram(img_wienerBi5.copy())
 
-normSMQT = util.normalize(smqt.copy(), 1.0)
-normSMQT = np.float32(normSMQT)
-normSMQTBi = util.normalize(smqtBi.copy(), 1.0)
-normSMQTBi = np.float32(normSMQTBi)
+    normFuzzy = util.normalize(fuzzy.copy(), 255)
+    normFuzzy = normFuzzy.astype(np.uint8)
+    normFuzzyBi = util.normalize(fuzzyBi.copy(), 255)
+    normFuzzyBi = normFuzzyBi.astype(np.uint8)
 
-smqtAndFuzzy = enhancement.adaptiveEnhancement(normSMQT.copy())
-smqtAndFuzzyBi = enhancement.adaptiveEnhancement(normSMQTBi.copy())
+    histFuzzy = histogramOperations.equalizeHistogram(normFuzzy.copy())
+    histFuzzyBi = histogramOperations.equalizeHistogram(normFuzzyBi.copy())
 
-hist = histogramOperations.equalizeHistogram(img_wiener.copy())
-histBi = histogramOperations.equalizeHistogram(img_wienerBi5.copy())
+    cv.imshow("orig", img_wiener)
+    cv.imshow("origBi", img_wienerBi5)
+    cv.imshow("smqt", smqt)
+    cv.imshow("smqtBi", smqtBi)
+    cv.imshow("fuzzy", fuzzy)
+    cv.imshow("fuzzyBi", fuzzyBi)
+    cv.imshow("smqt and fuzzy", smqtAndFuzzy)
+    cv.imshow("smqt and fuzzy Bi", smqtAndFuzzyBi)
+    cv.imshow("adaptive", adaptive)
+    cv.imshow("adaptiveBi", adaptiveBi)
+    cv.imshow("adaptive and fuzzy", adaptiveAndFuzzy)
+    cv.imshow("adaptive and fuzzy Bi", adaptiveAndFuzzyBi)
+    cv.imshow("hist", hist)
+    cv.imshow("histBi", histBi)
+    cv.imshow("hist and fuzzy", histFuzzy)
+    cv.imshow("hist and fuzzy Bi", histFuzzyBi)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
-normFuzzy = util.normalize(fuzzy.copy(), 255)
-normFuzzy = normFuzzy.astype(np.uint8)
-normFuzzyBi = util.normalize(fuzzyBi.copy(), 255)
-normFuzzyBi = normFuzzyBi.astype(np.uint8)
+    #=============thresholding====================
+    norm = util.normalize(smqtBi.copy(), 255.0)
+    norm = norm.astype(np.uint8)
+    normHist = util.normalize(histFuzzyBi.copy(), 255.0)
+    normHist = normHist.astype(np.uint8)
 
-histFuzzy = histogramOperations.equalizeHistogram(normFuzzy.copy())
-histFuzzyBi = histogramOperations.equalizeHistogram(normFuzzyBi.copy())
+    adaptive = doThresholding.adaptiveThreshold(smqtBi.copy())
+    adaptiveHist = doThresholding.adaptiveThreshold(histFuzzyBi.copy())
 
-cv.imshow("orig", img_wiener)
-cv.imshow("origBi", img_wienerBi5)
-cv.imshow("smqt", smqt)
-cv.imshow("smqtBi", smqtBi)
-cv.imshow("fuzzy", fuzzy)
-cv.imshow("fuzzyBi", fuzzyBi)
-cv.imshow("smqt and fuzzy", smqtAndFuzzy)
-cv.imshow("smqt and fuzzy Bi", smqtAndFuzzyBi)
-cv.imshow("adaptive", adaptive)
-cv.imshow("adaptiveBi", adaptiveBi)
-cv.imshow("adaptive and fuzzy", adaptiveAndFuzzy)
-cv.imshow("adaptive and fuzzy Bi", adaptiveAndFuzzyBi)
-cv.imshow("hist", hist)
-cv.imshow("histBi", histBi)
-cv.imshow("hist and fuzzy", histFuzzy)
-cv.imshow("hist and fuzzy Bi", histFuzzyBi)
-cv.waitKey(0)
-cv.destroyAllWindows()
+    otsu = doThresholding.otsuThreshold(smqtBi.copy())
+    otsuHis = doThresholding.otsuThreshold(histFuzzyBi.copy())
 
-#=============thresholding====================
-norm = util.normalize(smqtBi.copy(), 255.0)
-norm = norm.astype(np.uint8)
-normHist = util.normalize(histFuzzyBi.copy(), 255.0)
-normHist = normHist.astype(np.uint8)
+    niblack = doThresholding.niblackThreshold(norm.copy())
+    niblackHist = doThresholding.niblackThreshold(normHist.copy())
+    niblack = util.normalize(niblack, 255)
+    niblackHist = util.normalize(niblackHist, 255)
 
-adaptive = doThresholding.adaptiveThreshold(smqtBi.copy())
-adaptiveHist = doThresholding.adaptiveThreshold(histFuzzyBi.copy())
+    sauvola = doThresholding.niblackThreshold(norm.copy(), 1, 9, 0.025)
+    sauvolaHist = doThresholding.niblackThreshold(normHist.copy(), 1, 9, 0.025)
+    sauvola = util.normalize(sauvola, 255)
+    sauvolaHist = util.normalize(sauvolaHist, 255)
 
-otsu = doThresholding.otsuThreshold(smqtBi.copy())
-otsuHis = doThresholding.otsuThreshold(histFuzzyBi.copy())
+    wolf = doThresholding.niblackThreshold(norm.copy(), 2, 9, 0.025)
+    wolfHist = doThresholding.niblackThreshold(normHist.copy(), 2, 9, 0.025)
+    wolf = util.normalize(wolf, 255)
+    wolfHist = util.normalize(wolfHist, 255)
 
-niblack = doThresholding.niblackThreshold(norm.copy())
-niblackHist = doThresholding.niblackThreshold(normHist.copy())
-niblack = util.normalize(niblack, 255)
-niblackHist = util.normalize(niblackHist, 255)
+    nick = doThresholding.niblackThreshold(norm.copy(), 3, 9, 0.025)
+    nickHist = doThresholding.niblackThreshold(normHist.copy(), 3, 9, 0.025)
+    nick = util.normalize(nick, 255)
+    nickHist = util.normalize(nickHist, 255)
 
-sauvola = doThresholding.niblackThreshold(norm.copy(), 1, 9, 0.025)
-sauvolaHist = doThresholding.niblackThreshold(normHist.copy(), 1, 9, 0.025)
-sauvola = util.normalize(sauvola, 255)
-sauvolaHist = util.normalize(sauvolaHist, 255)
+    skel = doThresholding.calculateSkeleton(smqtBi.copy())
+    skelHist = doThresholding.calculateSkeleton(histFuzzyBi.copy())
 
-wolf = doThresholding.niblackThreshold(norm.copy(), 2, 9, 0.025)
-wolfHist = doThresholding.niblackThreshold(normHist.copy(), 2, 9, 0.025)
-wolf = util.normalize(wolf, 255)
-wolfHist = util.normalize(wolfHist, 255)
+    thin = doThresholding.thinning(smqtBi.copy())
+    thinHist = doThresholding.thinning(histFuzzyBi.copy())
 
-nick = doThresholding.niblackThreshold(norm.copy(), 3, 9, 0.025)
-nickHist = doThresholding.niblackThreshold(normHist.copy(), 3, 9, 0.025)
-nick = util.normalize(nick, 255)
-nickHist = util.normalize(nickHist, 255)
-
-skel = doThresholding.calculateSkeleton(smqtBi.copy())
-skelHist = doThresholding.calculateSkeleton(histFuzzyBi.copy())
-
-thin = doThresholding.thinning(smqtBi.copy())
-thinHist = doThresholding.thinning(histFuzzyBi.copy())
-
-cv.imshow("orig", smqtBi)
-cv.imshow("orig Hist", histFuzzyBi)
-cv.imshow("adaptive th", adaptive)
-cv.imshow("adaptive Hist", adaptiveHist)
-cv.imshow("otsu", otsu)
-cv.imshow("otsu Hist", otsuHis)
-cv.imshow("niblack", niblack)
-cv.imshow("niblack hist", niblackHist)
-cv.imshow("sauvola", sauvola)
-cv.imshow("sauvola hist", sauvolaHist)
-cv.imshow("wolf", wolf)
-cv.imshow("wolf hist", wolfHist)
-cv.imshow("nick", nick)
-cv.imshow("nick hist", nickHist)
-cv.imshow("skeleton", skel)
-cv.imshow("skeleton Hist", skelHist)
-cv.imshow("thinning", thin)
-cv.imshow("thinning Hist", thinHist)
-cv.waitKey(0)
-cv.destroyAllWindows()
+    cv.imshow("orig", smqtBi)
+    cv.imshow("orig Hist", histFuzzyBi)
+    cv.imshow("adaptive th", adaptive)
+    cv.imshow("adaptive Hist", adaptiveHist)
+    cv.imshow("otsu", otsu)
+    cv.imshow("otsu Hist", otsuHis)
+    cv.imshow("niblack", niblack)
+    cv.imshow("niblack hist", niblackHist)
+    cv.imshow("sauvola", sauvola)
+    cv.imshow("sauvola hist", sauvolaHist)
+    cv.imshow("wolf", wolf)
+    cv.imshow("wolf hist", wolfHist)
+    cv.imshow("nick", nick)
+    cv.imshow("nick hist", nickHist)
+    cv.imshow("skeleton", skel)
+    cv.imshow("skeleton Hist", skelHist)
+    cv.imshow("thinning", thin)
+    cv.imshow("thinning Hist", thinHist)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 # canny = cv.Canny(img,100, 100)
 # hist = histogramOperations.equalizeHistogram(img.copy())
