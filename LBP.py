@@ -3,6 +3,7 @@ from sklearn.cluster import KMeans
 import numpy as np
 import cv2 as cv
 import histogramOperations
+import util
 
 def pixelToPatch(img) :
 
@@ -44,13 +45,17 @@ def classifiy(img, window, points, radius) :
 
     # Now convert back into uint8, and make original image
     center = np.uint8(center)
-    res = center[label.flatten()]
-    res = res[:, 0:3]
+    colors = np.empty((K, 3))
+    for i in range(K) :
+        colors[i, : ] = util.generateColor(i)
+    res = colors[label.flatten()]
+    # res = res[:, 0:3]
     kMeansRes = res.reshape((height, width, 3))
-    kMeansRes = cv.cvtColor(kMeansRes, cv.COLOR_BGR2GRAY)
-
-    histogramOperations.equalizeHistogram(kMeansRes)
-    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182color.jpg', kMeansRes)
+    kMeansRes = np.uint8(kMeansRes)
+    # kMeansRes = cv.cvtColor(kMeansRes, cv.COLOR_BGR2GRAY)
+    #
+    # histogramOperations.equalizeHistogram(kMeansRes)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204color.jpg', kMeansRes)
     cv.imshow("kMeans", kMeansRes)
     cv.waitKey(0)
     cv.destroyAllWindows()

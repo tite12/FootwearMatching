@@ -11,25 +11,25 @@ import LBP
 
 firstVersionPreprocessing = False
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182ref.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
 
-# roi = cv.selectROI("Select noise area", img)
-# # cv.destroyAllWindows()
-# noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
-#
-# img = filters.eliminateNoise(img, noiseImg, 0.1)
-#
-# cv.imshow("denoised", img)
-#
-# nonLocalMeans = filters.regionBasedNonLocalMeans(img)
-#
-# cv.imshow("non-local mean", nonLocalMeans)
-# equal = histogramOperations.equalizeHistogram(nonLocalMeans)
+roi = cv.selectROI("Select noise area", img)
+# cv.destroyAllWindows()
+noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+
+img = filters.eliminateNoise(img, noiseImg, 0.1)
+
+cv.imshow("denoised", img)
+
+nonLocalMeans = filters.regionBasedNonLocalMeans(img)
+
+cv.imshow("non-local mean", nonLocalMeans)
+equal = histogramOperations.equalizeHistogram(nonLocalMeans)
 # cv.imshow("equalized non-local mean", equal)
 # cv.waitKey(0)
 # cv.destroyAllWindows()
 
-LBP.classifiy(img, 9, 24, 8)
+LBP.classifiy(equal, 9, 24, 8)
 
 if (firstVersionPreprocessing) :
     bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
