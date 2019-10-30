@@ -19,17 +19,22 @@ noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
 img = filters.eliminateNoise(img, noiseImg, 0.1)
 
-cv.imshow("denoised", img)
+
 
 nonLocalMeans = filters.regionBasedNonLocalMeans(img)
 
 cv.imshow("non-local mean", nonLocalMeans)
 equal = histogramOperations.equalizeHistogram(nonLocalMeans)
+cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204nlm.jpg', equal)
+
 # cv.imshow("equalized non-local mean", equal)
 # cv.waitKey(0)
 # cv.destroyAllWindows()
 
-LBP.classifiy(equal, 9, 24, 8)
+normal = LBP.classify(equal.copy(), 9, 24, 8, False)
+ptp = LBP.classify(equal.copy(), 9, 24, 8, True)
+cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204lbp.jpg', normal)
+cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204ptp.jpg', ptp)
 
 if (firstVersionPreprocessing) :
     bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)

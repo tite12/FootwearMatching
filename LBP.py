@@ -5,9 +5,17 @@ import cv2 as cv
 import histogramOperations
 import util
 
-def pixelToPatch(img) :
-
-    return
+def pixelToPatch(img, r) :
+    s = r
+    if r % 2 == 0 :
+        s = s + 1
+    height, width = img.shape
+    res = np.zeros((height, width))
+    for x in range(width):
+        for y in range(height):
+            currentPatch = img[max(0, y - s):min(y + s + 1, height), max(0, x - s):min(x + s + 1, width)]
+            res[y, x] = np.mean(currentPatch)
+    return res
 
 def basicLBP(img, points, radius) :
 
@@ -20,15 +28,19 @@ def basicLBP(img, points, radius) :
 
     return hist
 
-def classifiy(img, window, points, radius) :
+def classify(img, window, points, radius, usePtP = False) :
+    if usePtP :
+        img = pixelToPatch(img, radius)
+        points = min(8, points)
     height, width = img.shape
     lbpImg = np.empty((height, width, points + 2))
     for x in range(width):
         for y in range(height):
-            if x > window and y > window and x < width - window and y < height - window :
-                currentPatch = img[y-window:y+window, x-window:x+window]
-                hist = basicLBP(currentPatch, points, radius)
-                lbpImg[y, x] = hist
+            # if x > window and y > window and x < width - window and y < height - window :
+            # currentPatch = img[y-window:y+window, x-window:x+window]
+            currentPatch = img[max(0, y-window):min(y+window, height), max(0, x-window):min(x+window, width)]
+            hist = basicLBP(currentPatch, points, radius)
+            lbpImg[y, x] = hist
         print x
 
     lbpImg = lbpImg * 255
@@ -52,12 +64,5 @@ def classifiy(img, window, points, radius) :
     # res = res[:, 0:3]
     kMeansRes = res.reshape((height, width, 3))
     kMeansRes = np.uint8(kMeansRes)
-    # kMeansRes = cv.cvtColor(kMeansRes, cv.COLOR_BGR2GRAY)
-    #
-    # histogramOperations.equalizeHistogram(kMeansRes)
-    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204color.jpg', kMeansRes)
-    cv.imshow("kMeans", kMeansRes)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
 
-    return
+    return kMeansRes

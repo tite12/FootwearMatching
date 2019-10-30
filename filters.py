@@ -443,8 +443,10 @@ def eliminateNoise(img, noiseImg, th) :
             #     for n in range(heightPatch) :
             #         l2[n, m] = math.sqrt(pow(l2[n, m], 2))
             # l2 = np.mean(l2)
+
             # l2 = la.norm(patch - comparePatch)
             l2 = distance.euclidean(patch.reshape((-1, 1)), comparePatch.reshape((-1, 1)))
+            l2 = l2 / (heightPatch * widthPatch)
             smoothingMask[y, x] = l2
 
             if yComparePatch > 0 :
