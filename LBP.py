@@ -66,3 +66,49 @@ def classify(img, window, points, radius, usePtP = False) :
     kMeansRes = np.uint8(kMeansRes)
 
     return kMeansRes
+
+def eliminateNoise(noiseX, noiseY, window, points, radius, img) :
+    height, width = img.shape
+    noisePatch = img[max(0, noiseY - window):min(noiseY + window, height), max(0, noiseX - window):min(noiseX + window, width)]
+    noiseHist = basicLBP(noisePatch, points, radius)
+    noiseHist = np.float32(noiseHist)
+
+
+    lbpmask = np.empty((height, width), np.float32)
+    lbpmaskChi = np.empty((height, width), np.float32)
+    lbpmaskInt = np.empty((height, width), np.float32)
+    lbpmaskBha = np.empty((height, width), np.float32)
+    for x in range(width):
+        for y in range(height):
+            # if x > window and y > window and x < width - window and y < height - window :
+            # currentPatch = img[y-window:y+window, x-window:x+window]
+            currentPatch = img[max(0, y - window):min(y + window, height), max(0, x - window):min(x + window, width)]
+            hist = basicLBP(currentPatch, points, radius)
+            comp = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_CORREL)
+            compChi = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_CHISQR)
+            compInt = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_INTERSECT)
+            compBha = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_BHATTACHARYYA)
+            lbpmask[y, x] = comp
+            lbpmaskChi[y, x] = compChi
+            lbpmaskInt[y, x] = compInt
+            lbpmaskBha[y, x] = compBha
+        print x
+
+    equalizedMask = util.normalize(lbpmask, 1)
+    equalizedMaskChi = util.normalize(lbpmaskChi, 1)
+    equalizedMaskInt = util.normalize(lbpmaskInt, 1)
+    equalizedMaskBha = util.normalize(lbpmaskBha, 1)
+
+    cv.imshow("chi", equalizedMaskChi)
+    cv.imshow("Int", equalizedMaskInt)
+    cv.imshow("Bha", equalizedMaskBha)
+    cv.imshow("corr", equalizedMask)
+
+    # cv.imshow("hm", np.uint8(img * 1-equalizedMask))
+    # cv.imshow("im", np.uint8(img * (1-equalizedMaskInt)))
+    # cv.imshow("bm", np.uint8(img * equalizedMask))
+    # cv.imshow("cm", np.uint8(img * (1 - equalizedMask)))
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+    return (1-equalizedMask), equalizedMaskChi, (1 - equalizedMaskInt), equalizedMaskBha

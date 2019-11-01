@@ -11,30 +11,60 @@ import LBP
 
 firstVersionPreprocessing = False
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
-
-roi = cv.selectROI("Select noise area", img)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00205.jpg', 0)
+enh = enhancement.fastSMQT(img)
+roi = cv.selectROI("Select noise area", enh)
 # cv.destroyAllWindows()
 noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-img = filters.eliminateNoise(img, noiseImg, 0.1)
+corr, chi, inr, bha = LBP.eliminateNoise(int(roi[0]), int(roi[1]), 8, 24, 8, enh)
+corrImg = np.uint8(img * corr)
+chiImg = np.uint8(img * chi)
+intImg = np.uint8(img * inr)
+bhaImg = np.uint8(img * bha)
+
+
+# img = filters.eliminateNoise(img, noiseImg, 0.1)
+
+corrImg = histogramOperations.equalizeHistogram(corrImg)
+chiImg = histogramOperations.equalizeHistogram(chiImg)
+intImg = histogramOperations.equalizeHistogram(intImg)
+bhaImg = histogramOperations.equalizeHistogram(bhaImg)
+
+cv.imshow("corr", corrImg)
+cv.imshow("chi", chiImg)
+cv.imshow("inr", intImg)
+cv.imshow("bha", bhaImg)
+cv.waitKey(0)
+cv.destroyAllWindows()
+
+corrImg = filters.regionBasedNonLocalMeans(img, corrImg)
+chiImg = filters.regionBasedNonLocalMeans(img, chiImg)
+intImg = filters.regionBasedNonLocalMeans(img, intImg)
+bhaImg = filters.regionBasedNonLocalMeans(img, bhaImg)
 
 
 
-nonLocalMeans = filters.regionBasedNonLocalMeans(img)
+cv.imshow("corr", corrImg)
+cv.imshow("chi", chiImg)
+cv.imshow("inr", intImg)
+cv.imshow("bha", bhaImg)
+cv.waitKey(0)
+cv.destroyAllWindows()
 
-cv.imshow("non-local mean", nonLocalMeans)
-equal = histogramOperations.equalizeHistogram(nonLocalMeans)
-cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204nlm.jpg', equal)
-
+#
+# cv.imshow("non-local mean", nonLocalMeans)
+# equal = histogramOperations.equalizeHistogram(nonLocalMeans)
+# cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241nlm_smqt.jpg', equal)
+#
 # cv.imshow("equalized non-local mean", equal)
 # cv.waitKey(0)
 # cv.destroyAllWindows()
-
-normal = LBP.classify(equal.copy(), 9, 24, 8, False)
-ptp = LBP.classify(equal.copy(), 9, 24, 8, True)
-cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204lbp.jpg', normal)
-cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204ptp.jpg', ptp)
+#
+# normal = LBP.classify(img.copy(), 9, 24, 8, False)
+# ptp = LBP.classify(img.copy(), 9, 24, 8, True)
+# cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_lbp.jpg', normal)
+# cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_ptp.jpg', ptp)
 
 if (firstVersionPreprocessing) :
     bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
