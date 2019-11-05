@@ -93,8 +93,10 @@ def nonLocalGrouping(img) :
             diffImg[y, x] = abs(eigVal1 - eigVal2)
     return diffImg
 
-def regionBasedNonLocalMeans(img, maskk) :
-    diffImg = nonLocalGrouping(maskk)
+def regionBasedNonLocalMeans(img, maskk, useMask = False) :
+    diffImg = maskk
+    if not useMask :
+        diffImg = nonLocalGrouping(img)
     height, width = img.shape
     res = np.zeros(img.shape, np.uint8)
     mask = np.zeros(img.shape, np.uint8)

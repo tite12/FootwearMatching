@@ -10,50 +10,19 @@ import enhancement
 import LBP
 
 firstVersionPreprocessing = False
+LBPdenoising = False
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00205.jpg', 0)
-enh = enhancement.fastSMQT(img)
-roi = cv.selectROI("Select noise area", enh)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
+
+roi = cv.selectROI("Select noise area", img)
 # cv.destroyAllWindows()
 noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+img = filters.eliminateNoise(img, noiseImg, 0.1)
+nonLocalMeans = filters.regionBasedNonLocalMeans(img, np.zeros((0, 0)))
 
-corr, chi, inr, bha = LBP.eliminateNoise(int(roi[0]), int(roi[1]), 8, 24, 8, enh)
-corrImg = np.uint8(img * corr)
-chiImg = np.uint8(img * chi)
-intImg = np.uint8(img * inr)
-bhaImg = np.uint8(img * bha)
-
-
-# img = filters.eliminateNoise(img, noiseImg, 0.1)
-
-corrImg = histogramOperations.equalizeHistogram(corrImg)
-chiImg = histogramOperations.equalizeHistogram(chiImg)
-intImg = histogramOperations.equalizeHistogram(intImg)
-bhaImg = histogramOperations.equalizeHistogram(bhaImg)
-
-cv.imshow("corr", corrImg)
-cv.imshow("chi", chiImg)
-cv.imshow("inr", intImg)
-cv.imshow("bha", bhaImg)
+cv.imshow("non-local mean", nonLocalMeans)
 cv.waitKey(0)
 cv.destroyAllWindows()
-
-corrImg = filters.regionBasedNonLocalMeans(img, corrImg)
-chiImg = filters.regionBasedNonLocalMeans(img, chiImg)
-intImg = filters.regionBasedNonLocalMeans(img, intImg)
-bhaImg = filters.regionBasedNonLocalMeans(img, bhaImg)
-
-
-
-cv.imshow("corr", corrImg)
-cv.imshow("chi", chiImg)
-cv.imshow("inr", intImg)
-cv.imshow("bha", bhaImg)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-#
-# cv.imshow("non-local mean", nonLocalMeans)
 # equal = histogramOperations.equalizeHistogram(nonLocalMeans)
 # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241nlm_smqt.jpg', equal)
 #
@@ -65,6 +34,58 @@ cv.destroyAllWindows()
 # ptp = LBP.classify(img.copy(), 9, 24, 8, True)
 # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_lbp.jpg', normal)
 # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_ptp.jpg', ptp)
+
+if LBPdenoising :
+    # enh = enhancement.fastSMQT(img)
+    corr, chi, inr, bha = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, img)
+    corrMed = np.mean(corr)
+    corr[corr < corrMed] = 0.0
+    chiMed = np.mean(chi)
+    chi[chi < chiMed] = 0.0
+    intMed = np.mean(inr)
+    inr[inr < intMed] = 0.0
+    bhaMed = np.mean(bha)
+    bha[bha < bhaMed] = 0.0
+
+
+    corrImg = np.uint8(img * corr)
+    chiImg = np.uint8(img * chi)
+    intImg = np.uint8(img * inr)
+    bhaImg = np.uint8(img * bha)
+    # img = filters.eliminateNoise(img, noiseImg, 0.1)
+
+    corrImg = histogramOperations.equalizeHistogram(corrImg)
+
+    chiImg = histogramOperations.equalizeHistogram(chiImg)
+
+    intImg = histogramOperations.equalizeHistogram(intImg)
+
+    bhaImg = histogramOperations.equalizeHistogram(bhaImg)
+
+
+
+
+
+    cv.imshow("corr", corrImg)
+    cv.imshow("chi", chiImg)
+    cv.imshow("inr", intImg)
+    cv.imshow("bha", bhaImg)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+    # corrImg = filters.regionBasedNonLocalMeans(img, corrImg)
+    # chiImg = filters.regionBasedNonLocalMeans(img, chiImg)
+    intImg = filters.regionBasedNonLocalMeans(intImg, intImg)
+    bhaImg = filters.regionBasedNonLocalMeans(bhaImg, bhaImg)
+
+
+
+    cv.imshow("corr", corrImg)
+    cv.imshow("chi", chiImg)
+    cv.imshow("inr", intImg)
+    cv.imshow("bha", bhaImg)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 if (firstVersionPreprocessing) :
     bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)

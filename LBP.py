@@ -20,7 +20,7 @@ def pixelToPatch(img, r) :
 def basicLBP(img, points, radius) :
 
     #test "uniform" and "var"
-    lbp = feature.local_binary_pattern(img, points, radius, method="uniform")
+    lbp = feature.local_binary_pattern(img, points, radius, method="var")
 
     hist, _ = np.histogram(lbp.ravel(), np.arange(0, points + 3), range(0, points + 2))
     hist = hist.astype("float")
@@ -67,10 +67,13 @@ def classify(img, window, points, radius, usePtP = False) :
 
     return kMeansRes
 
-def eliminateNoise(noiseX, noiseY, window, points, radius, img) :
+def eliminateNoise(noiseX, noiseY, noise, window, points, radius, img) :
     height, width = img.shape
-    noisePatch = img[max(0, noiseY - window):min(noiseY + window, height), max(0, noiseX - window):min(noiseX + window, width)]
-    noiseHist = basicLBP(noisePatch, points, radius)
+    # noisePatch = img[max(0, noiseY - window):min(noiseY + window, height), max(0, noiseX - window):min(noiseX + window, width)]
+    # noiseHist = basicLBP(noisePatch, points, radius)
+    noiseHist = basicLBP(noise, points, radius)
+    histH = 500
+    cv.normalize(noiseHist, noiseHist, 0, histH, cv.NORM_MINMAX)
     noiseHist = np.float32(noiseHist)
 
 
@@ -84,6 +87,7 @@ def eliminateNoise(noiseX, noiseY, window, points, radius, img) :
             # currentPatch = img[y-window:y+window, x-window:x+window]
             currentPatch = img[max(0, y - window):min(y + window, height), max(0, x - window):min(x + window, width)]
             hist = basicLBP(currentPatch, points, radius)
+            cv.normalize(hist, hist, 0, histH, cv.NORM_MINMAX)
             comp = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_CORREL)
             compChi = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_CHISQR)
             compInt = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_INTERSECT)
@@ -100,9 +104,9 @@ def eliminateNoise(noiseX, noiseY, window, points, radius, img) :
     equalizedMaskBha = util.normalize(lbpmaskBha, 1)
 
     cv.imshow("chi", equalizedMaskChi)
-    cv.imshow("Int", equalizedMaskInt)
+    cv.imshow("Int", 1-equalizedMaskInt)
     cv.imshow("Bha", equalizedMaskBha)
-    cv.imshow("corr", equalizedMask)
+    cv.imshow("corr", 1-equalizedMask)
 
     # cv.imshow("hm", np.uint8(img * 1-equalizedMask))
     # cv.imshow("im", np.uint8(img * (1-equalizedMaskInt)))
