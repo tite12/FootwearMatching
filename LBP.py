@@ -4,6 +4,7 @@ import numpy as np
 import cv2 as cv
 import histogramOperations
 import util
+import operator
 
 def pixelToPatch(img, r) :
     s = r
@@ -116,3 +117,69 @@ def eliminateNoise(noiseX, noiseY, noise, window, points, radius, img) :
     cv.destroyAllWindows()
 
     return (1-equalizedMask), equalizedMaskChi, (1 - equalizedMaskInt), equalizedMaskBha
+
+def threeLayeredLearning(img, mask) :
+    #Thehistogram f!i of the original pattern sets of interest
+    #of eachtrainingimage xi, andthethresholdparameter n to
+    #determine the proportions of dominant patterns selected from
+    #each training image.
+    getDominantPatterns(img, mask)
+    #Dominantpatternsets J1, J2,y, Jnj of nj images belonging to class j obtained from Algorithm 1.
+    getDiscriminativePatterns()
+    #Thediscriminativedominantpatternset JCj for each class j ðj ¼ 1, . . . ,CÞ obtained from Algorithm 2.
+    #since we only have one class we dont need this step
+    getGlobalPatterns()
+    return
+
+def getDominantPatterns(img, mask, th = 0.5, window = 9, points = 24, radius = 8) :
+    height, width = img.shape
+    lbpImg = np.empty((height, width, points + 2))
+    patterns = {}
+    for x in range(width):
+        for y in range(height):
+            if mask[y, x] == 0 :
+                continue
+            # if x > window and y > window and x < width - window and y < height - window :
+            # currentPatch = img[y-window:y+window, x-window:x+window]
+            currentPatch = img[max(0, y - window):min(y + window, height), max(0, x - window):min(x + window, width)]
+            hist = basicLBP(currentPatch, points, radius)
+            histogramFound = False
+            for key in patterns :
+                if cv.compareHist(hist, key, cv.HISTCMP_CORREL) == 1 :
+                    patterns[key] = patterns[key] + 1
+                    histogramFound = True
+                    break
+            if not histogramFound :
+                patterns[hist] = 1
+        print x
+    sortedPatterns = sorted(patterns.items(), key = operator.itemgetter(1))
+    prevSum = 0
+    allPixels = mask.sum()
+    dominantPatterns = []
+    for currentPattern in sortedPatterns :
+        dominantPatterns.append(currentPattern[0])
+        val = currentPattern[1] / allPixels + prevSum
+        if (val > th) :
+            break
+        else :
+            prevSum = val
+    return
+
+def getDiscriminativePatterns(patterns) :
+    discriminativePatterns = {}
+    for currentPatterns in patterns :
+        if discriminativePatterns.size == 0 :
+            discriminativePatterns = currentPatterns
+            continue
+        intersection = []
+        for currentPattern in currentPatterns :
+            for discPattern in discriminativePatterns :
+                if cv.compareHist(discPattern, currentPattern, cv.HISTCMP_CORREL) == 1:
+                    intersection.append(discPattern)
+                    break
+        discriminativePatterns = intersection
+        #TODO: check what happens if intersection is empty
+    return discriminativePatterns
+
+def getGlobalPatterns() :
+    return

@@ -81,7 +81,7 @@
       <workItem from="1570507432167" duration="13094000" />
       <workItem from="1570591986290" duration="27888000" />
       <workItem from="1570757233409" duration="203184000" />
-      <workItem from="1572235707107" duration="66561000" />
+      <workItem from="1572235707107" duration="72321000" />
     </task>
     <servers />
   </component>
@@ -108,11 +108,6 @@
           <url>file://$PROJECT_DIR$/filters.py</url>
           <line>228</line>
           <option name="timeStamp" value="170" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/LBP.py</url>
-          <line>117</line>
-          <option name="timeStamp" value="186" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
