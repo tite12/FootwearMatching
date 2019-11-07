@@ -1,3 +1,4 @@
+from cv2.cv2 import line_descriptor_BinaryDescriptor
 from skimage import feature
 from sklearn.cluster import KMeans
 import numpy as np
@@ -21,7 +22,7 @@ def pixelToPatch(img, r) :
 def basicLBP(img, points, radius) :
 
     #test "uniform" and "var"
-    lbp = feature.local_binary_pattern(img, points, radius, method="var")
+    lbp = feature.local_binary_pattern(img, points, radius, method="uniform")
 
     hist, _ = np.histogram(lbp.ravel(), np.arange(0, points + 3), range(0, points + 2))
     hist = hist.astype("float")
@@ -29,8 +30,8 @@ def basicLBP(img, points, radius) :
 
     return hist
 
-def classify(img, window, points, radius, usePtP = False) :
-    if usePtP :
+def getLBPImage(img, window, points, radius, usePtP = False) :
+    if usePtP:
         img = pixelToPatch(img, radius)
         points = min(8, points)
     height, width = img.shape
@@ -39,11 +40,27 @@ def classify(img, window, points, radius, usePtP = False) :
         for y in range(height):
             # if x > window and y > window and x < width - window and y < height - window :
             # currentPatch = img[y-window:y+window, x-window:x+window]
-            currentPatch = img[max(0, y-window):min(y+window, height), max(0, x-window):min(x+window, width)]
+            currentPatch = img[max(0, y - window):min(y + window, height), max(0, x - window):min(x + window, width)]
             hist = basicLBP(currentPatch, points, radius)
             lbpImg[y, x] = hist
         print x
+    return lbpImg
 
+def classify(img, window, points, radius, usePtP = False) :
+    # if usePtP :
+    #     img = pixelToPatch(img, radius)
+    #     points = min(8, points)
+    # height, width = img.shape
+    # lbpImg = np.empty((height, width, points + 2))
+    # for x in range(width):
+    #     for y in range(height):
+    #         # if x > window and y > window and x < width - window and y < height - window :
+    #         # currentPatch = img[y-window:y+window, x-window:x+window]
+    #         currentPatch = img[max(0, y-window):min(y+window, height), max(0, x-window):min(x+window, width)]
+    #         hist = basicLBP(currentPatch, points, radius)
+    #         lbpImg[y, x] = hist
+    #     print x
+    lbpImg = getLBPImage(img, window, points, radius, usePtP)
     lbpImg = lbpImg * 255
     # kMeans = KMeans().fit(lbpImg)
     lbpImg = np.float32(lbpImg)
@@ -118,22 +135,30 @@ def eliminateNoise(noiseX, noiseY, noise, window, points, radius, img) :
 
     return (1-equalizedMask), equalizedMaskChi, (1 - equalizedMaskInt), equalizedMaskBha
 
-def threeLayeredLearning(img, mask) :
-    #Thehistogram f!i of the original pattern sets of interest
-    #of eachtrainingimage xi, andthethresholdparameter n to
-    #determine the proportions of dominant patterns selected from
-    #each training image.
-    getDominantPatterns(img, mask)
+def threeLayeredLearning(images, masks) :
+    patterns = []
+    for i in range(len(images)) :
+        print("first Layer")
+        #Thehistogram f!i of the original pattern sets of interest
+        #of eachtrainingimage xi, andthethresholdparameter n to
+        #determine the proportions of dominant patterns selected from
+        #each training image.
+        pattern = getDominantPatterns(images[i], masks[i])
+        name = 'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/' + str(i) + '.txt'
+        np.savetxt(name, pattern, delimiter=',')
+        patterns.append(pattern)
     #Dominantpatternsets J1, J2,y, Jnj of nj images belonging to class j obtained from Algorithm 1.
-    getDiscriminativePatterns()
-    #Thediscriminativedominantpatternset JCj for each class j ðj ¼ 1, . . . ,CÞ obtained from Algorithm 2.
+    print("second Layer")
+    patterns = getDiscriminativePatterns(patterns)
+    name = 'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative.txt'
+    np.savetxt(name, patterns, delimiter=',')
+    #Thediscriminativedominantpatternset JCj for each class j  obtained from Algorithm 2.
     #since we only have one class we dont need this step
     getGlobalPatterns()
-    return
+    return patterns
 
-def getDominantPatterns(img, mask, th = 0.5, window = 9, points = 24, radius = 8) :
+def getDominantPatterns(img, mask, th = 1, window = 4, points = 8, radius = 3) :
     height, width = img.shape
-    lbpImg = np.empty((height, width, points + 2))
     patterns = {}
     for x in range(width):
         for y in range(height):
@@ -142,39 +167,44 @@ def getDominantPatterns(img, mask, th = 0.5, window = 9, points = 24, radius = 8
             # if x > window and y > window and x < width - window and y < height - window :
             # currentPatch = img[y-window:y+window, x-window:x+window]
             currentPatch = img[max(0, y - window):min(y + window, height), max(0, x - window):min(x + window, width)]
-            hist = basicLBP(currentPatch, points, radius)
+            hist = np.float32(basicLBP(currentPatch, points, radius))
+            tup = tuple(hist)
+            back = np.asarray(tup)
             histogramFound = False
             for key in patterns :
-                if cv.compareHist(hist, key, cv.HISTCMP_CORREL) == 1 :
+                # val = cv.compareHist(hist, np.asarray(key), cv.HISTCMP_CORREL)
+                # print(val)
+                if cv.compareHist(hist, np.asarray(key), cv.HISTCMP_CORREL) > 0.9 :
                     patterns[key] = patterns[key] + 1
                     histogramFound = True
                     break
             if not histogramFound :
-                patterns[hist] = 1
+                # print("test")
+                patterns[tup] = 1
         print x
     sortedPatterns = sorted(patterns.items(), key = operator.itemgetter(1))
     prevSum = 0
-    allPixels = mask.sum()
+    allPixels = float(mask.sum())
     dominantPatterns = []
-    for currentPattern in sortedPatterns :
+    for currentPattern in reversed(sortedPatterns) :
         dominantPatterns.append(currentPattern[0])
         val = currentPattern[1] / allPixels + prevSum
         if (val > th) :
             break
         else :
             prevSum = val
-    return
+    return dominantPatterns
 
 def getDiscriminativePatterns(patterns) :
     discriminativePatterns = {}
     for currentPatterns in patterns :
-        if discriminativePatterns.size == 0 :
+        if discriminativePatterns.__len__() == 0 :
             discriminativePatterns = currentPatterns
             continue
         intersection = []
         for currentPattern in currentPatterns :
             for discPattern in discriminativePatterns :
-                if cv.compareHist(discPattern, currentPattern, cv.HISTCMP_CORREL) == 1:
+                if cv.compareHist(np.asarray(discPattern), np.asarray(currentPattern), cv.HISTCMP_CORREL) > 0.9 :
                     intersection.append(discPattern)
                     break
         discriminativePatterns = intersection
