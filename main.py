@@ -12,7 +12,7 @@ import LBP
 firstVersionPreprocessing = False
 LBPdenoising = False
 
-img3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.jpg', 0)
+img3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 img9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009.jpg', 0)
 img17 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017.jpg', 0)
 img20 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00020.jpg', 0)
@@ -54,24 +54,28 @@ images = [img3, img9, img17, img20, img21, img25, img66]
 
 
 # patterns = LBP.threeLayeredLearning(images, masks)
-patterns = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative.txt', delimiter=',')
-lbpImage = LBP.getLBPImage(img66, 4, 8, 3)
-height, width = img66.shape
+patterns = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_6_24_5.txt', delimiter=',')
+img = img66.copy()
+lbpImage = LBP.getLBPImage(img, 6, 24, 5)
+height, width = img.shape
 res = np.zeros((height, width), np.float32)
 print("calculating")
 for x in range(width):
     for y in range(height):
         currentHisogram = lbpImage[y, x]
         currentHisogram = np.float32(currentHisogram)
+        maxVal = 0
         for pattern in patterns :
             val = cv.compareHist(currentHisogram, np.float32(np.asarray(pattern)), cv.HISTCMP_CORREL)
-            # print(val)
-            if val > 0.93:
-                res[y, x] = 1
-                continue
-
-cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output.jpg', res)
+            # if val > 0.75:
+            #     res[y, x] = 1
+            #     continue
+            if maxVal < val :
+                maxVal = val
+        res[y, x] = maxVal
+cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00066_6_24_5.jpg', res * 255)
 cv.imshow("res", res)
+cv.imshow("res2", img - np.uint8((1 - res) * 255))
 cv.waitKey(0)
 
 img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066.jpg', 0)
