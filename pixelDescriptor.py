@@ -35,8 +35,11 @@ def getDominantDescriptors(img, mask, useHOG = False) :
     des2 = des[1:len(des)]
     bf = cv.BFMatcher()
     descriptors= {}
-    while len(des2) > 0:
-        matches = bf.knnMatch(des1, des2, k=100)
+    # while len(des2) > 0:
+    height, width = des.shape
+    for y in range(height):
+        des1 = des[y:y+1]
+        matches = bf.knnMatch(des1, des, k=100)
         matches = matches[0]
         tup = tuple(des1[0])
         sum = 0
@@ -46,17 +49,18 @@ def getDominantDescriptors(img, mask, useHOG = False) :
             # print(m.distance)
             # n = matches[i + 1]
             # if m.distance < 0.75 * n.distance:
-            if m.distance < 400:
-                sum = sum + 1
-                keypointsToDelete.append(m.trainIdx)
+            if m.distance < 400 :
+                if m.distance > 0:
+                    sum = sum + 1
+                    keypointsToDelete.append(m.trainIdx)
             else :
                 break
         descriptors[tup] = sum
-        if len(keypointsToDelete) > 0 :
-            keypointsToDelete = np.sort(keypointsToDelete)
-            des2 = np.delete(des2, keypointsToDelete, 0)
-        des1 = des2[0:1]
-        des2 = des2[1:len(des2)]
+        # if len(keypointsToDelete) > 0 :
+        #     keypointsToDelete = np.sort(keypointsToDelete)
+        #     des2 = np.delete(des2, keypointsToDelete, 0)
+        # des1 = des2[0:1]
+        # des2 = des2[1:len(des2)]
 
     discriminativeDescriptors = []
     for key in descriptors :
@@ -64,68 +68,6 @@ def getDominantDescriptors(img, mask, useHOG = False) :
             discriminativeDescriptors.append(key)
 
     return discriminativeDescriptors
-    # height, width = img.shape
-    # patterns = {}
-    # noises = {}
-    # for x in range(width):
-    #     for y in range(height):
-    #         # if x > window and y > window and x < width - window and y < height - window :
-    #         # currentPatch = img[y-window:y+window, x-window:x+window]
-    #         currentPatch = img[max(0, y - window):min(y + window, height), max(0, x - window):min(x + window, width)]
-    #         hist = np.float32(basicLBP(currentPatch, points, radius))
-    #         tup = tuple(hist)
-    #         histogramFound = False
-    #         if mask[y, x] == 0 :
-    #             for key in noises:
-    #                 # val = cv.compareHist(hist, np.asarray(key), cv.HISTCMP_CORREL)
-    #                 # print(val)
-    #                 if cv.compareHist(hist, np.asarray(key), cv.HISTCMP_CORREL) > 0.9:
-    #                     noises[key] = noises[key] + 1
-    #                     histogramFound = True
-    #                     break
-    #             if not histogramFound:
-    #                 # print("test")
-    #                 noises[tup] = 1
-    #         else :
-    #             for key in patterns :
-    #                 # val = cv.compareHist(hist, np.asarray(key), cv.HISTCMP_CORREL)
-    #                 # print(val)
-    #                 if cv.compareHist(hist, np.asarray(key), cv.HISTCMP_CORREL) > 0.9 :
-    #                     patterns[key] = patterns[key] + 1
-    #                     histogramFound = True
-    #                     break
-    #             if not histogramFound :
-    #                 # print("test")
-    #                 patterns[tup] = 1
-    #     print x
-    # allPixels = float(mask.sum())
-    #
-    # sortedNoises = sorted(noises.items(), key = operator.itemgetter(1))
-    # noiseTh = 0.5
-    # prevSum = 0
-    # noisePixels = width * height
-    # for currentPattern in reversed(sortedNoises) :
-    #     if currentPattern[1] < 100 :
-    #         break
-    #     for key in patterns:
-    #         val = cv.compareHist(np.asarray(currentPattern[0]), np.asarray(key), cv.HISTCMP_CORREL)
-    #         # print(val)
-    #         if val > 0.9:
-    #             del patterns[key]
-    #             print("del")
-    #             break
-    #
-    # sortedPatterns = sorted(patterns.items(), key = operator.itemgetter(1))
-    # prevSum = 0
-    # dominantPatterns = []
-    # for currentPattern in reversed(sortedPatterns) :
-    #     dominantPatterns.append(currentPattern[0])
-    #     val = currentPattern[1] / allPixels + prevSum
-    #     if (val > th) :
-    #         break
-    #     else :
-    #         prevSum = val
-    # return dominantPatterns
 
 def getDiscriminativeFeatures(features) :
     bf = cv.BFMatcher()

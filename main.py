@@ -44,11 +44,11 @@ masks = [mask3, img9, mask17, mask20, mask21, mask25, mask66]
 
 images = [img3, img9, img17, img20, img21, img25, img66]
 
-descriptors = pixelDescriptor.threeLayeredLearning(images, masks)
-# descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
+# descriptors = pixelDescriptor.threeLayeredLearning(images, masks)
+descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
 descriptors = np.float32(np.asarray(descriptors))
 sift = cv.xfeatures2d.SIFT_create()
-img = img25
+img = img66
 kp, des = sift.detectAndCompute(img, None)
 
 bf = cv.BFMatcher()
@@ -60,8 +60,8 @@ for match in matches :
 
 output = cv.drawKeypoints(img,kp,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 outputMatched = cv.drawKeypoints(img,keypoints,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_00025.jpg',output)
-cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_matched_00025.jpg',outputMatched)
+# cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_00025.jpg',output)
+cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_matched_00066_alternative.jpg',outputMatched)
 cv.imshow("keypoints", output)
 cv.imshow("matched", outputMatched)
 cv.waitKey(0)
