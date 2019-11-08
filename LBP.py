@@ -1,4 +1,4 @@
-from cv2.cv2 import line_descriptor_BinaryDescriptor
+# from cv2.cv2 import line_descriptor_BinaryDescriptor
 from skimage import feature
 from sklearn.cluster import KMeans
 import numpy as np

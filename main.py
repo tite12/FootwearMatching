@@ -8,9 +8,12 @@ import filters
 import util
 import enhancement
 import LBP
+import pixelDescriptor
 
 firstVersionPreprocessing = False
 LBPdenoising = False
+LBPLearning = False
+mainPipeline = False
 
 img3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 img9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009.jpg', 0)
@@ -37,70 +40,84 @@ _, mask66 = cv.threshold(mask66, 125, 1, cv.THRESH_BINARY_INV)
 # mask66 =  np.float32(mask66)
 # cv.imshow("mask", mask66)
 # cv.waitKey(0)
-masks = [mask3, mask9, mask17, mask20, mask21, mask25, mask66]
+masks = [mask3, img9, mask17, mask20, mask21, mask25, mask66]
 
 images = [img3, img9, img17, img20, img21, img25, img66]
-# images = []
-# for i in range(len(unfImages)) :
-#     img = unfImages[i] * masks[i]
-#     cv.imshow("mask", img)
-#     cv.waitKey(0)
-#     cv.destroyAllWindows()
-#     img = filters.regionBasedNonLocalMeans(img, np.zeros((0, 0)))
-#     cv.imshow("means", img)
-#     cv.waitKey(0)
-#     cv.destroyAllWindows()
-#     images.append(img)
 
+descriptors = pixelDescriptor.threeLayeredLearning(images, masks)
+# descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
+descriptors = np.float32(np.asarray(descriptors))
+sift = cv.xfeatures2d.SIFT_create()
+img = img25
+kp, des = sift.detectAndCompute(img, None)
 
-# patterns = LBP.threeLayeredLearning(images, masks)
-patterns = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_6_24_5.txt', delimiter=',')
-img = img66.copy()
-lbpImage = LBP.getLBPImage(img, 6, 24, 5)
-height, width = img.shape
-res = np.zeros((height, width), np.float32)
-print("calculating")
-for x in range(width):
-    for y in range(height):
-        currentHisogram = lbpImage[y, x]
-        currentHisogram = np.float32(currentHisogram)
-        maxVal = 0
-        for pattern in patterns :
-            val = cv.compareHist(currentHisogram, np.float32(np.asarray(pattern)), cv.HISTCMP_CORREL)
-            # if val > 0.75:
-            #     res[y, x] = 1
-            #     continue
-            if maxVal < val :
-                maxVal = val
-        res[y, x] = maxVal
-cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00066_6_24_5.jpg', res * 255)
-cv.imshow("res", res)
-cv.imshow("res2", img - np.uint8((1 - res) * 255))
-cv.waitKey(0)
+bf = cv.BFMatcher()
+matches = bf.knnMatch(des,descriptors,k=1)
+keypoints = []
+for match in matches :
+    if match[0].distance < 400 :
+        keypoints.append(kp[match[0].queryIdx])
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066.jpg', 0)
-
-roi = cv.selectROI("Select noise area", img)
-# cv.destroyAllWindows()
-noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
-img = filters.eliminateNoise(img, noiseImg, 0.1)
-nonLocalMeans = filters.regionBasedNonLocalMeans(img, np.zeros((0, 0)))
-
-cv.imshow("non-local mean", nonLocalMeans)
+output = cv.drawKeypoints(img,kp,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+outputMatched = cv.drawKeypoints(img,keypoints,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_00025.jpg',output)
+cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_matched_00025.jpg',outputMatched)
+cv.imshow("keypoints", output)
+cv.imshow("matched", outputMatched)
 cv.waitKey(0)
 cv.destroyAllWindows()
 
-equal = histogramOperations.equalizeHistogram(nonLocalMeans)
-cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241nlm_smqt.jpg', equal)
+if LBPLearning :
+    patterns = LBP.threeLayeredLearning(images, masks)
+    patterns = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_6_24_5.txt', delimiter=',')
+    img = img66.copy()
+    lbpImage = LBP.getLBPImage(img, 6, 24, 5)
+    height, width = img.shape
+    res = np.zeros((height, width), np.float32)
+    print("calculating")
+    for x in range(width):
+        for y in range(height):
+            currentHisogram = lbpImage[y, x]
+            currentHisogram = np.float32(currentHisogram)
+            maxVal = 0
+            for pattern in patterns :
+                val = cv.compareHist(currentHisogram, np.float32(np.asarray(pattern)), cv.HISTCMP_CORREL)
+                # if val > 0.75:
+                #     res[y, x] = 1
+                #     continue
+                if maxVal < val :
+                    maxVal = val
+            res[y, x] = maxVal
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00066_6_24_5.jpg', res * 255)
+    cv.imshow("res", res)
+    cv.imshow("res2", img - np.uint8((1 - res) * 255))
+    cv.waitKey(0)
 
-cv.imshow("equalized non-local mean", equal)
-cv.waitKey(0)
-cv.destroyAllWindows()
-#
-normal = LBP.classify(img.copy(), 9, 24, 8, False)
-# ptp = LBP.classify(img.copy(), 9, 24, 8, True)
-# cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_lbp.jpg', normal)
-# cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_ptp.jpg', ptp)
+if mainPipeline :
+
+    img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066.jpg', 0)
+
+    roi = cv.selectROI("Select noise area", img)
+    # cv.destroyAllWindows()
+    noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    img = filters.eliminateNoise(img, noiseImg, 0.1)
+    nonLocalMeans = filters.regionBasedNonLocalMeans(img, np.zeros((0, 0)))
+
+    cv.imshow("non-local mean", nonLocalMeans)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+    equal = histogramOperations.equalizeHistogram(nonLocalMeans)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241nlm_smqt.jpg', equal)
+
+    cv.imshow("equalized non-local mean", equal)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+    #
+    normal = LBP.classify(img.copy(), 9, 24, 8, False)
+    # ptp = LBP.classify(img.copy(), 9, 24, 8, True)
+    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_lbp.jpg', normal)
+    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_ptp.jpg', ptp)
 
 if LBPdenoising :
     # enh = enhancement.fastSMQT(img)
