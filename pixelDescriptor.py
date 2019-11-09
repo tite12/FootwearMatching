@@ -1,5 +1,6 @@
 import numpy as np
 import cv2 as cv
+from numpy.linalg import norm
 
 def threeLayeredLearning(images, masks, useHOG = False) :
     descriptors = []
@@ -28,46 +29,91 @@ def threeLayeredLearning(images, masks, useHOG = False) :
     getGlobalFeatures()
     return descriptors
 
-def getDominantDescriptors(img, mask, useHOG = False) :
-    sift = cv.xfeatures2d.SIFT_create()
-    kp, des = sift.detectAndCompute(img, mask)
-    des1 = des[0:1]
-    des2 = des[1:len(des)]
-    bf = cv.BFMatcher()
-    descriptors= {}
-    # while len(des2) > 0:
-    height, width = des.shape
-    for y in range(height):
-        des1 = des[y:y+1]
-        matches = bf.knnMatch(des1, des, k=100)
-        matches = matches[0]
-        tup = tuple(des1[0])
-        sum = 0
-        keypointsToDelete = []
-        for i in range(len(matches) - 1):
-            m = matches[i]
-            # print(m.distance)
-            # n = matches[i + 1]
-            # if m.distance < 0.75 * n.distance:
-            if m.distance < 400 :
-                if m.distance > 0:
-                    sum = sum + 1
-                    keypointsToDelete.append(m.trainIdx)
-            else :
-                break
-        descriptors[tup] = sum
-        # if len(keypointsToDelete) > 0 :
-        #     keypointsToDelete = np.sort(keypointsToDelete)
-        #     des2 = np.delete(des2, keypointsToDelete, 0)
-        # des1 = des2[0:1]
-        # des2 = des2[1:len(des2)]
+def getDominantDescriptors(img, mask, useHOG = False, winX = 20, cellX = 10, winY = 20, cellY = 10) :
+    if useHOG :
+        winSize = (winX, winY)
+        blockSize = (cellX * 2, cellY * 2)
+        blockStride = (cellX, cellY)
+        cellSize = (cellX, cellY)
+        nbins = 9
+        derivAperture = 1
+        winSigma = -1.
+        histogramNormType = 0
+        L2HysThreshold = 0.2
+        gammaCorrection = 1
+        nlevels = 64
+        useSignedGradients = True
+        hog = cv.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivAperture,winSigma,histogramNormType,L2HysThreshold,gammaCorrection,nlevels, useSignedGradients)
+        # hist = hog.compute(img)
 
-    discriminativeDescriptors = []
-    for key in descriptors :
-        if descriptors[key] > 0 :
-            discriminativeDescriptors.append(key)
+        features = []
+        height, width = img.shape
+        for x in range(width):
+            for y in range(height):
+                if mask[y, x] == 0 :
+                    continue
+                if y - winY < 0 or y + winY > height or x - winX < 0 or x + winX > width :
+                    continue
+                currentPatch = img[(y - winY):(y + winY), (x - winX):(x + winX)]
+                hist = hog.compute(currentPatch)
+                minVal = np.amin(hist)
+                maxVal = np.amax(hist)
+                if minVal != 0 or maxVal != 0 :
+                    features.append(hist.flatten())
 
-    return discriminativeDescriptors
+        descriptors = {}
+        for feature in features:
+            keyFound = False
+            for key in descriptors:
+                distance = np.linalg.norm(np.asarray(key) - feature)
+                print distance
+                if distance < 1 :
+                    keyFound = True
+                    descriptors[key] = descriptors[key] + 1
+            if not keyFound:
+                tup = tuple(feature)
+                descriptors[tup] = 1
+        return
+    else :
+        sift = cv.xfeatures2d.SIFT_create()
+        kp, des = sift.detectAndCompute(img, mask)
+        des1 = des[0:1]
+        des2 = des[1:len(des)]
+        bf = cv.BFMatcher()
+        descriptors= {}
+        # while len(des2) > 0:
+        height, width = des.shape
+        for y in range(height):
+            des1 = des[y:y+1]
+            matches = bf.knnMatch(des1, des, k=100)
+            matches = matches[0]
+            tup = tuple(des1[0])
+            sum = 0
+            keypointsToDelete = []
+            for i in range(len(matches) - 1):
+                m = matches[i]
+                # print(m.distance)
+                # n = matches[i + 1]
+                # if m.distance < 0.75 * n.distance:
+                if m.distance < 400 :
+                    if m.distance > 0:
+                        sum = sum + 1
+                        keypointsToDelete.append(m.trainIdx)
+                else :
+                    break
+            descriptors[tup] = sum
+            # if len(keypointsToDelete) > 0 :
+            #     keypointsToDelete = np.sort(keypointsToDelete)
+            #     des2 = np.delete(des2, keypointsToDelete, 0)
+            # des1 = des2[0:1]
+            # des2 = des2[1:len(des2)]
+
+        discriminativeDescriptors = []
+        for key in descriptors :
+            if descriptors[key] > 0 :
+                discriminativeDescriptors.append(key)
+
+        return discriminativeDescriptors
 
 def getDiscriminativeFeatures(features) :
     bf = cv.BFMatcher()
@@ -103,3 +149,31 @@ def getDiscriminativeFeatures(features) :
 
 def getGlobalFeatures() :
     return
+
+def hog(img):
+    gx = cv.Sobel(img, cv.CV_32F, 1, 0)
+    gy = cv.Sobel(img, cv.CV_32F, 0, 1)
+    mag, ang = cv.cartToPolar(gx, gy)
+    bin_n = 16 # Number of bins
+    bin = np.int32(bin_n*ang/(2*np.pi))
+
+    bin_cells = []
+    mag_cells = []
+
+    cellx = celly = 8
+
+    for i in range(0,img.shape[0]/celly):
+        for j in range(0,img.shape[1]/cellx):
+            bin_cells.append(bin[i*celly : i*celly+celly, j*cellx : j*cellx+cellx])
+            mag_cells.append(mag[i*celly : i*celly+celly, j*cellx : j*cellx+cellx])
+
+    hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
+    hist = np.hstack(hists)
+
+    # transform to Hellinger kernel
+    eps = 1e-7
+    hist /= hist.sum() + eps
+    hist = np.sqrt(hist)
+    hist /= norm(hist) + eps
+
+    return hist
