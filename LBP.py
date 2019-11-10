@@ -116,11 +116,25 @@ def eliminateNoise(noiseX, noiseY, noise, window, points, radius, img) :
             lbpmaskBha[y, x] = compBha
         print x
 
-    equalizedMask = util.normalize(lbpmask, 1)
-    equalizedMaskChi = util.normalize(lbpmaskChi, 1)
-    equalizedMaskInt = util.normalize(lbpmaskInt, 1)
-    equalizedMaskBha = util.normalize(lbpmaskBha, 1)
+    equalizedMask = util.normalize(lbpmask, 1) * 255
+    equalizedMaskChi = util.normalize(lbpmaskChi, 1) * 255
+    equalizedMaskInt = util.normalize(lbpmaskInt, 1) * 255
+    equalizedMaskBha = util.normalize(lbpmaskBha, 1) * 255
+    equalizedMask = np.uint8(equalizedMask)
+    equalizedMaskChi = np.uint8(equalizedMaskChi)
+    equalizedMaskInt = np.uint8(equalizedMaskInt)
+    equalizedMaskBha = np.uint8(equalizedMaskBha)
 
+    equalizedMask = histogramOperations.equalizeHistogram(equalizedMask)
+    equalizedMaskChi = histogramOperations.equalizeHistogram(equalizedMaskChi)
+    equalizedMaskInt = histogramOperations.equalizeHistogram(equalizedMaskInt)
+    equalizedMaskBha = histogramOperations.equalizeHistogram(equalizedMaskBha)
+    equalizedMask = np.float32(equalizedMask) / 255
+    equalizedMaskChi = np.float32(equalizedMaskChi) / 255
+    equalizedMaskInt = np.float32(equalizedMaskInt) / 255
+    equalizedMaskBha = np.float32(equalizedMaskBha) / 255
+    # for the Correlation and Intersection methods, the higher the metric, the more accurate the match
+    #white means noise, black means information
     cv.imshow("chi", equalizedMaskChi)
     cv.imshow("Int", 1-equalizedMaskInt)
     cv.imshow("Bha", equalizedMaskBha)
@@ -133,7 +147,7 @@ def eliminateNoise(noiseX, noiseY, noise, window, points, radius, img) :
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-    return (1-equalizedMask), equalizedMaskChi, (1 - equalizedMaskInt), equalizedMaskBha
+    return (1-equalizedMask), (equalizedMaskChi), (1-equalizedMaskInt), (equalizedMaskBha)
 
 def threeLayeredLearning(images, masks) :
     patterns = []

@@ -11,61 +11,92 @@ import LBP
 import pixelDescriptor
 
 firstVersionPreprocessing = False
-LBPdenoising = False
+LBPdenoising = True
 LBPLearning = False
 mainPipeline = False
+SIFTdescriptor = False
+HOGdescriptor = False
+pixelDescriptors = False
 
-img3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
-img9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009.jpg', 0)
-img17 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017.jpg', 0)
-img20 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00020.jpg', 0)
-img21 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00021.jpg', 0)
-img25 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00025.jpg', 0)
-img66 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066.jpg', 0)
+if pixelDescriptors :
+    img3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
+    img9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009.jpg', 0)
+    img17 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017.jpg', 0)
+    img20 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00020.jpg', 0)
+    img21 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00021.jpg', 0)
+    img25 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00025.jpg', 0)
+    img66 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066.jpg', 0)
 
-mask3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003_mask.jpg', 0)
-_, mask3 = cv.threshold(mask3, 125, 1, cv.THRESH_BINARY_INV)
-mask9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009_mask.jpg', 0)
-_, mask9 = cv.threshold(mask9, 125, 1, cv.THRESH_BINARY_INV)
-mask17 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017_mask.jpg', 0)
-_, mask17 = cv.threshold(mask17, 125, 1, cv.THRESH_BINARY_INV)
-mask20 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00020_mask.jpg', 0)
-_, mask20 = cv.threshold(mask20, 125, 1, cv.THRESH_BINARY_INV)
-mask21 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00021_mask.jpg', 0)
-_, mask21 = cv.threshold(mask21, 125, 1, cv.THRESH_BINARY_INV)
-mask25 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00025_mask.jpg', 0)
-_, mask25 = cv.threshold(mask25, 125, 1, cv.THRESH_BINARY_INV)
-mask66 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066_mask.jpg', 0)
-_, mask66 = cv.threshold(mask66, 125, 1, cv.THRESH_BINARY_INV)
-# mask66 =  np.float32(mask66)
-# cv.imshow("mask", mask66)
-# cv.waitKey(0)
-masks = [mask66, mask3, img9, mask17, mask20, mask21, mask25]
+    mask3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003_mask.jpg', 0)
+    _, mask3 = cv.threshold(mask3, 125, 1, cv.THRESH_BINARY_INV)
+    mask9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009_mask.jpg', 0)
+    _, mask9 = cv.threshold(mask9, 125, 1, cv.THRESH_BINARY_INV)
+    mask17 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017_mask.jpg', 0)
+    _, mask17 = cv.threshold(mask17, 125, 1, cv.THRESH_BINARY_INV)
+    mask20 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00020_mask.jpg', 0)
+    _, mask20 = cv.threshold(mask20, 125, 1, cv.THRESH_BINARY_INV)
+    mask21 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00021_mask.jpg', 0)
+    _, mask21 = cv.threshold(mask21, 125, 1, cv.THRESH_BINARY_INV)
+    mask25 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00025_mask.jpg', 0)
+    _, mask25 = cv.threshold(mask25, 125, 1, cv.THRESH_BINARY_INV)
+    mask66 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066_mask.jpg', 0)
+    _, mask66 = cv.threshold(mask66, 125, 1, cv.THRESH_BINARY_INV)
+    # mask66 =  np.float32(mask66)
+    # cv.imshow("mask", mask66)
+    # cv.waitKey(0)
+    masks = [mask66, mask3, img9, mask17, mask20, mask21, mask25]
 
-images = [img66, img3, img9, img17, img20, img21, img25]
+    images = [img66, img3, img9, img17, img20, img21, img25]
 
-descriptors = pixelDescriptor.threeLayeredLearning(images, masks, True)
-descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
-descriptors = np.float32(np.asarray(descriptors))
-sift = cv.xfeatures2d.SIFT_create()
-img = img66
-kp, des = sift.detectAndCompute(img, None)
+    if HOGdescriptor :
+        # descriptors = pixelDescriptor.threeLayeredLearning(images, masks, SIFTdescriptor)
+        descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_HOG.txt', delimiter=',')
+        descriptors = np.float32(np.asarray(descriptors))
+        img = img66
+        winX = 20
+        winY = 20
+        hog = pixelDescriptor.getHOGDescriptor()
+        height, width = img.shape
+        res = np.zeros((height, width), np.float32)
+        for x in xrange(0, width, 3):
+            for y in xrange(0, height, 3):
+                if y - winY < 0 or y + winY > height or x - winX < 0 or x + winX > width:
+                    continue
+                currentPatch = img[(y - winY):(y + winY), (x - winX):(x + winX)]
+                hist = hog.compute(currentPatch)
+                maxVal = 0
+                for descriptor in descriptors:
+                    val = np.linalg.norm(hist - descriptor)
+                    if maxVal < val :
+                        maxVal = val
+                res[y, x] = maxVal
+        res = util.normalize(res, 1)
+        cv.imshow("res", 1 - res)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
-bf = cv.BFMatcher()
-matches = bf.knnMatch(des,descriptors,k=1)
-keypoints = []
-for match in matches :
-    if match[0].distance < 400 :
-        keypoints.append(kp[match[0].queryIdx])
+    if SIFTdescriptor :
+        descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
+        descriptors = np.float32(np.asarray(descriptors))
+        sift = cv.xfeatures2d.SIFT_create()
+        img = img66
+        kp, des = sift.detectAndCompute(img, None)
 
-output = cv.drawKeypoints(img,kp,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-outputMatched = cv.drawKeypoints(img,keypoints,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-# cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_00025.jpg',output)
-# cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_matched_00066_alternative.jpg',outputMatched)
-cv.imshow("keypoints", output)
-cv.imshow("matched", outputMatched)
-cv.waitKey(0)
-cv.destroyAllWindows()
+        bf = cv.BFMatcher()
+        matches = bf.knnMatch(des,descriptors,k=1)
+        keypoints = []
+        for match in matches :
+            if match[0].distance < 400 :
+                keypoints.append(kp[match[0].queryIdx])
+
+        output = cv.drawKeypoints(img,kp,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        outputMatched = cv.drawKeypoints(img,keypoints,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_00025.jpg',output)
+        # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_matched_00066_alternative.jpg',outputMatched)
+        cv.imshow("keypoints", output)
+        cv.imshow("matched", outputMatched)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
 if LBPLearning :
     patterns = LBP.threeLayeredLearning(images, masks)
@@ -93,13 +124,14 @@ if LBPLearning :
     cv.imshow("res2", img - np.uint8((1 - res) * 255))
     cv.waitKey(0)
 
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
+
+roi = cv.selectROI("Select noise area", img)
+
+# cv.destroyAllWindows()
+noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+
 if mainPipeline :
-
-    img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066.jpg', 0)
-
-    roi = cv.selectROI("Select noise area", img)
-    # cv.destroyAllWindows()
-    noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
     img = filters.eliminateNoise(img, noiseImg, 0.1)
     nonLocalMeans = filters.regionBasedNonLocalMeans(img, np.zeros((0, 0)))
 
@@ -124,32 +156,42 @@ if LBPdenoising :
     corr, chi, inr, bha = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, img)
     corrMed = np.mean(corr)
     corr[corr < corrMed] = 0.0
+    corr[corr >= corrMed] = 1.0
     chiMed = np.mean(chi)
     chi[chi < chiMed] = 0.0
+    chi[chi >= chiMed] = 1.0
     intMed = np.mean(inr)
     inr[inr < intMed] = 0.0
+    inr[inr >= intMed] = 1.0
     bhaMed = np.mean(bha)
     bha[bha < bhaMed] = 0.0
+    bha[bha >= bhaMed] = 1.0
 
+    cv.imshow("corr", corr)
+    cv.imshow("chi", chi)
+    cv.imshow("inr", inr)
+    cv.imshow("bha", bha)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
     corrImg = np.uint8(img * corr)
     chiImg = np.uint8(img * chi)
     intImg = np.uint8(img * inr)
     bhaImg = np.uint8(img * bha)
-    # img = filters.eliminateNoise(img, noiseImg, 0.1)
-
-    corrImg = histogramOperations.equalizeHistogram(corrImg)
-
-    chiImg = histogramOperations.equalizeHistogram(chiImg)
-
-    intImg = histogramOperations.equalizeHistogram(intImg)
-
-    bhaImg = histogramOperations.equalizeHistogram(bhaImg)
-
-
-
-
-
+    # # img = filters.eliminateNoise(img, noiseImg, 0.1)
+    #
+    # # corrImg = histogramOperations.equalizeHistogram(corrImg)
+    # #
+    # # chiImg = histogramOperations.equalizeHistogram(chiImg)
+    # #
+    # # intImg = histogramOperations.equalizeHistogram(intImg)
+    # #
+    # # bhaImg = histogramOperations.equalizeHistogram(bhaImg)
+    #
+    #
+    #
+    #
+    #
     cv.imshow("corr", corrImg)
     cv.imshow("chi", chiImg)
     cv.imshow("inr", intImg)
@@ -157,19 +199,19 @@ if LBPdenoising :
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-    # corrImg = filters.regionBasedNonLocalMeans(img, corrImg)
-    # chiImg = filters.regionBasedNonLocalMeans(img, chiImg)
-    intImg = filters.regionBasedNonLocalMeans(intImg, intImg)
-    bhaImg = filters.regionBasedNonLocalMeans(bhaImg, bhaImg)
-
-
-
-    cv.imshow("corr", corrImg)
-    cv.imshow("chi", chiImg)
-    cv.imshow("inr", intImg)
-    cv.imshow("bha", bhaImg)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # corrImg = filters.regionBasedNonLocalMeans(img, corr, True)
+    # chiImg = filters.regionBasedNonLocalMeans(img, chi, True)
+    # intImg = filters.regionBasedNonLocalMeans(img, inr, True)
+    # bhaImg = filters.regionBasedNonLocalMeans(img, bha, True)
+    #
+    #
+    #
+    # cv.imshow("corr", corrImg)
+    # cv.imshow("chi", chiImg)
+    # cv.imshow("inr", intImg)
+    # cv.imshow("bha", bhaImg)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
 
 if (firstVersionPreprocessing) :
     bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
