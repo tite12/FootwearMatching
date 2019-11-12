@@ -76,11 +76,11 @@ if pixelDescriptors :
         cv.destroyAllWindows()
 
     if SIFTdescriptor :
-        # descriptors = pixelDescriptor.threeLayeredLearning(images, masks, False)
-        descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
+        descriptors = pixelDescriptor.threeLayeredLearning(images, masks, False)
+        # descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
         descriptors = np.float32(np.asarray(descriptors))
         sift = cv.xfeatures2d.SIFT_create()
-        img = img3
+        img = img66
         height, width = img.shape
         kp = []
         for y in range(height):

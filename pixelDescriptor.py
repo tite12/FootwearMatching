@@ -73,23 +73,23 @@ def getDominantDescriptors(img, mask, useHOG = False, winX = 20, winY = 0) :
                 if minVal != 0 or maxVal != 0 :
                     features.append(hist.flatten())
 
-        descriptors = {}
+        noiseDescriptors = {}
         print("find occurances")
         i = 0
         for feature in features:
             print i
             i = i +1
             keyFound = False
-            for key in descriptors:
+            for key in noiseDescriptors:
                 distance = np.linalg.norm(np.asarray(key) - feature)
                 # print distance
                 if distance < 1 :
                     keyFound = True
-                    descriptors[key] = descriptors[key] + 1
+                    noiseDescriptors[key] = noiseDescriptors[key] + 1
             if not keyFound:
                 tup = tuple(feature)
-                descriptors[tup] = 1
-        sortedFeatures = sorted(descriptors.items(), key=operator.itemgetter(1))
+                noiseDescriptors[tup] = 1
+        sortedFeatures = sorted(noiseDescriptors.items(), key=operator.itemgetter(1))
         dominantDescriptors = []
         allPixels = float(mask.sum())
         th = 0.9
@@ -106,52 +106,67 @@ def getDominantDescriptors(img, mask, useHOG = False, winX = 20, winY = 0) :
     else :
         height, width = img.shape
         kp = []
+        noiseKP = []
         for y in range(height) :
             for x in range(width) :
+                keypoint = cv.KeyPoint(y = float(y), x = float(x), _size = float(1))
                 if mask[y, x] == 0 :
-                    continue
-                kp.append(cv.KeyPoint(y = float(y), x = float(x), _size = float(1)))
+                    noiseKP.append(keypoint)
+                else :
+                    kp.append(keypoint)
         sift = cv.xfeatures2d.SIFT_create()
         # kp, des = sift.detectAndCompute(img, mask)
-        des = sift.compute(img, kp)
-        kp = des[0]
-        des = des[1]
-        des1 = des[0:1]
-        des2 = des[1:len(des)]
-        bf = cv.BFMatcher()
-        descriptors= {}
-        # while len(des2) > 0:
+        desPattern = sift.compute(img, kp)
+        desNoise = sift.compute(img, noiseKP)
+        kp = desNoise[0]
+        des = desNoise[1]
         height, width = des.shape
-        for y in range(height):
-            des1 = des[y:y+1]
-            matches = bf.knnMatch(des1, des, k=100)
+        des1 = des[0:1]
+        des2 = des[1:height]
+        bf = cv.BFMatcher()
+        noiseDescriptors= {}
+        # for y in range(height - 1):
+        while len(des2) >  0 :
+            matches = bf.knnMatch(des1, des2, k=100)
             matches = matches[0]
             tup = tuple(des1[0])
             sum = 0
-            print y
+            print len(des2)
             keypointsToDelete = []
             for i in range(len(matches) - 1):
                 m = matches[i]
-
                 # n = matches[i + 1]
                 # if m.distance < 0.75 * n.distance:
                 if m.distance < 300 :
                     if m.distance > 0:
                         sum = sum + 1
-                        # keypointsToDelete.append(m.trainIdx)
-                else :
-                    break
-            descriptors[tup] = sum
-            # if len(keypointsToDelete) > 0 :
-            #     keypointsToDelete = np.sort(keypointsToDelete)
-            #     des2 = np.delete(des2, keypointsToDelete, 0)
-            # des1 = des2[0:1]
-            # des2 = des2[1:len(des2)]
+                        keypointsToDelete.append(m.trainIdx)
+            noiseDescriptors[tup] = sum
+            if len(keypointsToDelete) > 0 :
+                keypointsToDelete = np.sort(keypointsToDelete)
+                des2 = np.delete(des2, keypointsToDelete, 0)
+            des1 = des2[0:1]
+            des2 = des2[1:len(des2)]
 
-        dominantDescriptors = []
-        for key in descriptors :
-            if descriptors[key] > 10 :
-                dominantDescriptors.append(key)
+        dominantDescriptors = desPattern[1]
+        sortedNoises = sorted(noiseDescriptors.items(), key=operator.itemgetter(1))
+        dominantNoises = []
+        for current in reversed(sortedNoises):
+            if current[1] < 10 :
+                break
+            dominantNoises.append(np.asarray(current[0]))
+
+        matches = bf.knnMatch(np.asarray(dominantNoises), dominantDescriptors, k=100)
+        toDelete = []
+        for match in matches:
+            for m in match :
+                print m.distance
+                if m.distance < 250:
+                    toDelete.append(m.trainIdx)
+        if len(toDelete) > 0:
+            toDelete = np.sort(toDelete)
+            dominantDescriptors = np.delete(dominantDescriptors, toDelete, 0)
+
 
         return dominantDescriptors
 
