@@ -134,7 +134,7 @@ def eliminateNoise(noiseX, noiseY, noise, window, points, radius, img) :
     equalizedMaskInt = np.float32(equalizedMaskInt) / 255
     equalizedMaskBha = np.float32(equalizedMaskBha) / 255
     # for the Correlation and Intersection methods, the higher the metric, the more accurate the match
-    #white means noise, black means information
+    #white means data, black means noise
     cv.imshow("chi", equalizedMaskChi)
     cv.imshow("Int", 1-equalizedMaskInt)
     cv.imshow("Bha", equalizedMaskBha)

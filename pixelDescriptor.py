@@ -13,13 +13,13 @@ def threeLayeredLearning(images, masks, useHOG = False) :
         #of eachtrainingimage xi, andthethresholdparameter n to
         #determine the proportions of dominant patterns selected from
         #each training image.
-        # descriptor = getDominantDescriptors(images[i], masks[i], useHOG)
-        # name = 'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/' + str(i) + '_SIFT.txt'
-        # if useHOG :
-        name = 'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/' + str(
+        descriptor = getDominantDescriptors(images[i], masks[i], useHOG)
+        name = 'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/' + str(i) + '_SIFT.txt'
+        if useHOG :
+            name = 'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/' + str(
                 i) + '_HOG.txt'
         # i = i - 1
-        # np.savetxt(name, descriptor, delimiter=',')
+        np.savetxt(name, descriptor, delimiter=',')
 
         descriptor = np.loadtxt(name, delimiter=',')
         descriptors.append(descriptor)
@@ -104,8 +104,18 @@ def getDominantDescriptors(img, mask, useHOG = False, winX = 20, winY = 0) :
                 prevSum = val
         return dominantDescriptors
     else :
+        height, width = img.shape
+        kp = []
+        for y in range(height) :
+            for x in range(width) :
+                if mask[y, x] == 0 :
+                    continue
+                kp.append(cv.KeyPoint(y = float(y), x = float(x), _size = float(1)))
         sift = cv.xfeatures2d.SIFT_create()
-        kp, des = sift.detectAndCompute(img, mask)
+        # kp, des = sift.detectAndCompute(img, mask)
+        des = sift.compute(img, kp)
+        kp = des[0]
+        des = des[1]
         des1 = des[0:1]
         des2 = des[1:len(des)]
         bf = cv.BFMatcher()
@@ -118,16 +128,17 @@ def getDominantDescriptors(img, mask, useHOG = False, winX = 20, winY = 0) :
             matches = matches[0]
             tup = tuple(des1[0])
             sum = 0
+            print y
             keypointsToDelete = []
             for i in range(len(matches) - 1):
                 m = matches[i]
-                # print(m.distance)
+
                 # n = matches[i + 1]
                 # if m.distance < 0.75 * n.distance:
-                if m.distance < 400 :
+                if m.distance < 300 :
                     if m.distance > 0:
                         sum = sum + 1
-                        keypointsToDelete.append(m.trainIdx)
+                        # keypointsToDelete.append(m.trainIdx)
                 else :
                     break
             descriptors[tup] = sum
@@ -139,7 +150,7 @@ def getDominantDescriptors(img, mask, useHOG = False, winX = 20, winY = 0) :
 
         dominantDescriptors = []
         for key in descriptors :
-            if descriptors[key] > 0 :
+            if descriptors[key] > 10 :
                 dominantDescriptors.append(key)
 
         return dominantDescriptors
@@ -166,7 +177,9 @@ def getDiscriminativeFeatures(features, useHOG = False) :
         bf = cv.BFMatcher()
         for i in range(1, len(features)) :
             f1 = np.asarray(discriminativeFeatures)
+            f1 = np.float32(f1)
             f2 = np.asarray(features[i])
+            f2 = np.float32(f2)
             matches = bf.knnMatch(f1, f2, k=1)
             intersection = []
             for match in matches :

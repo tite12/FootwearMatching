@@ -11,12 +11,12 @@ import LBP
 import pixelDescriptor
 
 firstVersionPreprocessing = False
-LBPdenoising = True
+LBPdenoising = False
 LBPLearning = False
 mainPipeline = False
-SIFTdescriptor = False
+SIFTdescriptor = True
 HOGdescriptor = False
-pixelDescriptors = False
+pixelDescriptors = True
 
 if pixelDescriptors :
     img3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
@@ -76,17 +76,27 @@ if pixelDescriptors :
         cv.destroyAllWindows()
 
     if SIFTdescriptor :
+        # descriptors = pixelDescriptor.threeLayeredLearning(images, masks, False)
         descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
         descriptors = np.float32(np.asarray(descriptors))
         sift = cv.xfeatures2d.SIFT_create()
-        img = img66
-        kp, des = sift.detectAndCompute(img, None)
+        img = img3
+        height, width = img.shape
+        kp = []
+        for y in range(height):
+            for x in range(width):
+                kp.append(cv.KeyPoint(y = float(y), x = float(x), _size = float(1)))
+        sift = cv.xfeatures2d.SIFT_create()
+        # kp, des = sift.detectAndCompute(img, mask)
+        des = sift.compute(img, kp)
+        kp = des[0]
+        des = des[1]
 
         bf = cv.BFMatcher()
         matches = bf.knnMatch(des,descriptors,k=1)
         keypoints = []
         for match in matches :
-            if match[0].distance < 400 :
+            if match[0].distance < 200 :
                 keypoints.append(kp[match[0].queryIdx])
 
         output = cv.drawKeypoints(img,kp,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
@@ -124,7 +134,7 @@ if LBPLearning :
     cv.imshow("res2", img - np.uint8((1 - res) * 255))
     cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182.jpg', 0)
 
 roi = cv.selectROI("Select noise area", img)
 
