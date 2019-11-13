@@ -99,12 +99,14 @@ def eliminateNoise(noiseX, noiseY, noise, window, points, radius, img) :
     lbpmaskChi = np.empty((height, width), np.float32)
     lbpmaskInt = np.empty((height, width), np.float32)
     lbpmaskBha = np.empty((height, width), np.float32)
+    lbpImg = np.empty((height, width, points + 2))
     for x in range(width):
         for y in range(height):
             # if x > window and y > window and x < width - window and y < height - window :
             # currentPatch = img[y-window:y+window, x-window:x+window]
             currentPatch = img[max(0, y - window):min(y + window, height), max(0, x - window):min(x + window, width)]
             hist = basicLBP(currentPatch, points, radius)
+            lbpImg[y, x] = hist
             cv.normalize(hist, hist, 0, histH, cv.NORM_MINMAX)
             comp = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_CORREL)
             compChi = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_CHISQR)
@@ -135,19 +137,19 @@ def eliminateNoise(noiseX, noiseY, noise, window, points, radius, img) :
     equalizedMaskBha = np.float32(equalizedMaskBha) / 255
     # for the Correlation and Intersection methods, the higher the metric, the more accurate the match
     #white means data, black means noise
-    cv.imshow("chi", equalizedMaskChi)
-    cv.imshow("Int", 1-equalizedMaskInt)
-    cv.imshow("Bha", equalizedMaskBha)
-    cv.imshow("corr", 1-equalizedMask)
+    # cv.imshow("chi", equalizedMaskChi)
+    # cv.imshow("Int", 1-equalizedMaskInt)
+    # cv.imshow("Bha", equalizedMaskBha)
+    # cv.imshow("corr", 1-equalizedMask)
 
     # cv.imshow("hm", np.uint8(img * 1-equalizedMask))
     # cv.imshow("im", np.uint8(img * (1-equalizedMaskInt)))
     # cv.imshow("bm", np.uint8(img * equalizedMask))
     # cv.imshow("cm", np.uint8(img * (1 - equalizedMask)))
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
 
-    return (1-equalizedMask), (equalizedMaskChi), (1-equalizedMaskInt), (equalizedMaskBha)
+    return (1-equalizedMask), (equalizedMaskChi), (1-equalizedMaskInt), (equalizedMaskBha), lbpImg
 
 def threeLayeredLearning(images, masks) :
     patterns = []

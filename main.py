@@ -3,6 +3,7 @@ from _ast import keyword
 import numpy as np
 import cv2 as cv
 from numpy import result_type
+from matplotlib import pyplot as plt
 
 import doThresholding
 import histogramOperations
@@ -13,12 +14,22 @@ import LBP
 import pixelDescriptor
 
 firstVersionPreprocessing = False
-LBPdenoising = False
+LBPdenoising = True
 LBPLearning = False
 mainPipeline = False
-SIFTdescriptor = True
+SIFTdescriptor = False
 HOGdescriptor = False
-pixelDescriptors = True
+pixelDescriptors = False
+lbpImg = np.empty((0, 0))
+
+def click_and_show(event, x, y, flags, param) :
+    global lbpImg
+
+    if event == cv.EVENT_LBUTTONDOWN:
+        hist = lbpImg[y, x] * 255
+        hist = np.uint8(hist)
+        plt.plot(hist)
+        plt.show()
 
 if pixelDescriptors :
     img3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
@@ -141,7 +152,7 @@ if LBPLearning :
     cv.imshow("res2", img - np.uint8((1 - res) * 255))
     cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00205.jpg', 0)
 
 roi = cv.selectROI("Select noise area", img)
 
@@ -170,7 +181,23 @@ if mainPipeline :
 
 if LBPdenoising :
     # enh = enhancement.fastSMQT(img)
-    corr, chi, inr, bha = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, img)
+    corr, chi, inr, bha, lbpImg = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, img)
+    # corrI, chiI, inrI, bhaI = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, inr)
+    # corrC, chiC, inrC, bhaC = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, corr)
+    # corrCh, chiCh, inrCh, bhaCh = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, chi)
+    # corrB, chiB, inrB, bhaB = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, bha)
+
+    cv.namedWindow("hist")
+    cv.setMouseCallback("hist", click_and_show)
+    cv.imshow("hist", img)
+    cv.imshow("corr", corr)
+    cv.imshow("chi", chi)
+    cv.imshow("inr", inr)
+    cv.imshow("bha", bha)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+
     corrMed = np.mean(corr)
     corr[corr < corrMed] = 0.0
     corr[corr >= corrMed] = 1.0
@@ -184,12 +211,7 @@ if LBPdenoising :
     bha[bha < bhaMed] = 0.0
     bha[bha >= bhaMed] = 1.0
 
-    cv.imshow("corr", corr)
-    cv.imshow("chi", chi)
-    cv.imshow("inr", inr)
-    cv.imshow("bha", bha)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+
 
     corrImg = np.uint8(img * corr)
     chiImg = np.uint8(img * chi)
@@ -547,3 +569,4 @@ if (firstVersionPreprocessing) :
 # cv.imshow("orig",orig)
 # cv.waitKey(0)
 # cv.destroyAllWindows()
+
