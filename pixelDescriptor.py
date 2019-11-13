@@ -160,7 +160,6 @@ def getDominantDescriptors(img, mask, useHOG = False, winX = 20, winY = 0) :
         toDelete = []
         for match in matches:
             for m in match :
-                print m.distance
                 if m.distance < 250:
                     toDelete.append(m.trainIdx)
         if len(toDelete) > 0:

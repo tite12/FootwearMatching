@@ -1,6 +1,8 @@
+from _ast import keyword
+
 import numpy as np
 import cv2 as cv
-
+from numpy import result_type
 
 import doThresholding
 import histogramOperations
@@ -76,11 +78,11 @@ if pixelDescriptors :
         cv.destroyAllWindows()
 
     if SIFTdescriptor :
-        descriptors = pixelDescriptor.threeLayeredLearning(images, masks, False)
-        # descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
+        # descriptors = pixelDescriptor.threeLayeredLearning(images, masks, False)
+        descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
         descriptors = np.float32(np.asarray(descriptors))
         sift = cv.xfeatures2d.SIFT_create()
-        img = img66
+        img = img17
         height, width = img.shape
         kp = []
         for y in range(height):
@@ -95,15 +97,20 @@ if pixelDescriptors :
         bf = cv.BFMatcher()
         matches = bf.knnMatch(des,descriptors,k=1)
         keypoints = []
+        results = np.zeros(img.shape, np.float32)
         for match in matches :
             if match[0].distance < 200 :
-                keypoints.append(kp[match[0].queryIdx])
-
+                keypoint = kp[match[0].queryIdx]
+                keypoints.append(keypoint)
+                y = int(keypoint.pt[1])
+                x = int(keypoint.pt[0])
+                results[y, x] = 1
+        results = filters.filterMask(results)
         output = cv.drawKeypoints(img,kp,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         outputMatched = cv.drawKeypoints(img,keypoints,img,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_00025.jpg',output)
         # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_SIFT_matched_00066_alternative.jpg',outputMatched)
-        cv.imshow("keypoints", output)
+        cv.imshow("keypoint mask", results)
         cv.imshow("matched", outputMatched)
         cv.waitKey(0)
         cv.destroyAllWindows()

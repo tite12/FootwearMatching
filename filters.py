@@ -502,3 +502,16 @@ def eliminateNoise(img, noiseImg, th) :
 
     return comp
 
+#
+def filterMask(mask, window = 2, th = 3) :
+    height, width = mask.shape
+    result = np.zeros(mask.shape, np.float32)
+    for x in range(width):
+        for y in range(height):
+            currentPatch = mask[max(y - window, 0):min(y + window, height), max(x - window, 0):min(x + window, width)]
+            if np.sum(currentPatch) > th :
+                result[y, x] = 1
+    # kernel = np.ones((2,2),np.uint8)
+    # result = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
+    # result = cv.morphologyEx(result, cv.MORPH_CLOSE, kernel)
+    return result
