@@ -152,7 +152,7 @@ if LBPLearning :
     cv.imshow("res2", img - np.uint8((1 - res) * 255))
     cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00205.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
 
 roi = cv.selectROI("Select noise area", img)
 
@@ -181,7 +181,7 @@ if mainPipeline :
 
 if LBPdenoising :
     # enh = enhancement.fastSMQT(img)
-    corr, chi, inr, bha, lbpImg = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, img)
+    corr, chi, inr, bha, lbpImg = LBP.eliminateNoise(int(roi[0]), int(roi[1]), roi[2], roi[3],  8, 24, 8, img)
     # corrI, chiI, inrI, bhaI = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, inr)
     # corrC, chiC, inrC, bhaC = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, corr)
     # corrCh, chiCh, inrCh, bhaCh = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, chi)

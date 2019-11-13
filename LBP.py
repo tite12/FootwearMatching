@@ -85,14 +85,33 @@ def classify(img, window, points, radius, usePtP = False) :
 
     return kMeansRes
 
-def eliminateNoise(noiseX, noiseY, noise, window, points, radius, img) :
+def eliminateNoise(noiseX, noiseY, noiseWidth, noiseHeight, window, points, radius, img) :
     height, width = img.shape
     # noisePatch = img[max(0, noiseY - window):min(noiseY + window, height), max(0, noiseX - window):min(noiseX + window, width)]
     # noiseHist = basicLBP(noisePatch, points, radius)
-    noiseHist = basicLBP(noise, points, radius)
+    if noiseWidth % 2 == 1 :
+        noiseWidth = noiseWidth - 1
+    noiseWidth = noiseWidth / 2
+    if noiseHeight % 2 == 1 :
+        noiseHeight = noiseHeight - 1
+    noiseHeight = noiseHeight / 2
+    noiseUL = img[noiseY:(noiseY + noiseHeight), noiseX:(noiseX + noiseWidth)]
+    noiseUR = img[noiseY:(noiseY + noiseHeight), (noiseX + noiseWidth): (noiseX + noiseWidth + noiseWidth)]
+    noiseLL = img[(noiseY + noiseHeight):(noiseY + noiseHeight + noiseHeight), noiseX:(noiseX + noiseWidth)]
+    noiseLR = img[(noiseY + noiseHeight):(noiseY + noiseHeight + noiseHeight), (noiseX + noiseWidth):(noiseX + noiseWidth + noiseWidth)]
+    noiseHistUL = basicLBP(noiseUL, points, radius)
+    noiseHistUR = basicLBP(noiseUR, points, radius)
+    noiseHistLL = basicLBP(noiseLL, points, radius)
+    noiseHistLR = basicLBP(noiseLR, points, radius)
     histH = 500
-    cv.normalize(noiseHist, noiseHist, 0, histH, cv.NORM_MINMAX)
-    noiseHist = np.float32(noiseHist)
+    cv.normalize(noiseHistUL, noiseHistUL, 0, histH, cv.NORM_MINMAX)
+    noiseHistUL = np.float32(noiseHistUL)
+    cv.normalize(noiseHistUR, noiseHistUR, 0, histH, cv.NORM_MINMAX)
+    noiseHistUR = np.float32(noiseHistUR)
+    cv.normalize(noiseHistLL, noiseHistLL, 0, histH, cv.NORM_MINMAX)
+    noiseHistLL = np.float32(noiseHistLL)
+    cv.normalize(noiseHistLR, noiseHistLR, 0, histH, cv.NORM_MINMAX)
+    noiseHistLR = np.float32(noiseHistLR)
 
 
     lbpmask = np.empty((height, width), np.float32)
@@ -104,14 +123,28 @@ def eliminateNoise(noiseX, noiseY, noise, window, points, radius, img) :
         for y in range(height):
             # if x > window and y > window and x < width - window and y < height - window :
             # currentPatch = img[y-window:y+window, x-window:x+window]
-            currentPatch = img[max(0, y - window):min(y + window, height), max(0, x - window):min(x + window, width)]
+            currentPatch = img[max(0, y - noiseHeight):min(y + noiseHeight, height), max(0, x - noiseWidth):min(x + noiseWidth, width)]
             hist = basicLBP(currentPatch, points, radius)
             lbpImg[y, x] = hist
             cv.normalize(hist, hist, 0, histH, cv.NORM_MINMAX)
-            comp = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_CORREL)
-            compChi = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_CHISQR)
-            compInt = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_INTERSECT)
-            compBha = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_BHATTACHARYYA)
+
+            comp = max(max(cv.compareHist(noiseHistUL, np.float32(hist), cv.HISTCMP_CORREL), cv.compareHist(noiseHistUR, np.float32(hist), cv.HISTCMP_CORREL)),
+                       max(cv.compareHist(noiseHistLL, np.float32(hist), cv.HISTCMP_CORREL), cv.compareHist(noiseHistLR, np.float32(hist), cv.HISTCMP_CORREL)))
+            compChi = max(max(cv.compareHist(noiseHistUL, np.float32(hist), cv.HISTCMP_CHISQR),
+                           cv.compareHist(noiseHistUR, np.float32(hist), cv.HISTCMP_CHISQR)),
+                       max(cv.compareHist(noiseHistLL, np.float32(hist), cv.HISTCMP_CHISQR),
+                           cv.compareHist(noiseHistLR, np.float32(hist), cv.HISTCMP_CHISQR)))
+            compInt = max(max(cv.compareHist(noiseHistUL, np.float32(hist), cv.HISTCMP_INTERSECT),
+                           cv.compareHist(noiseHistUR, np.float32(hist), cv.HISTCMP_INTERSECT)),
+                       max(cv.compareHist(noiseHistLL, np.float32(hist), cv.HISTCMP_INTERSECT),
+                           cv.compareHist(noiseHistLR, np.float32(hist), cv.HISTCMP_INTERSECT)))
+            compBha = max(max(cv.compareHist(noiseHistUL, np.float32(hist), cv.HISTCMP_BHATTACHARYYA),
+                           cv.compareHist(noiseHistUR, np.float32(hist), cv.HISTCMP_BHATTACHARYYA)),
+                       max(cv.compareHist(noiseHistLL, np.float32(hist), cv.HISTCMP_BHATTACHARYYA),
+                           cv.compareHist(noiseHistLR, np.float32(hist), cv.HISTCMP_BHATTACHARYYA)))
+            # compChi = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_CHISQR)
+            # compInt = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_INTERSECT)
+            # compBha = cv.compareHist(noiseHist, np.float32(hist), cv.HISTCMP_BHATTACHARYYA)
             lbpmask[y, x] = comp
             lbpmaskChi[y, x] = compChi
             lbpmaskInt[y, x] = compInt
