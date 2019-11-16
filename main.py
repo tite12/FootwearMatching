@@ -12,15 +12,17 @@ import util
 import enhancement
 import LBP
 import pixelDescriptor
+import signalTransform
 
 firstVersionPreprocessing = False
-LBPdenoising = True
+LBPdenoising = False
 LBPLearning = False
 mainPipeline = False
 SIFTdescriptor = False
 HOGdescriptor = False
 pixelDescriptors = False
 lbpImg = np.empty((0, 0))
+signal = True
 
 def click_and_show(event, x, y, flags, param) :
     global lbpImg
@@ -152,12 +154,21 @@ if LBPLearning :
     cv.imshow("res2", img - np.uint8((1 - res) * 255))
     cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182.jpg', 0)
 
 roi = cv.selectROI("Select noise area", img)
 
 # cv.destroyAllWindows()
 noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+
+if signal:
+    corr = signalTransform.eliminateNoise(img, noiseImg)
+    corr = np.uint8(util.normalize(corr, 255))
+    equalized = histogramOperations.equalizeHistogram(corr)
+    cv.imshow("F-M", corr)
+    cv.imshow("equalized F-M", equalized)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 if mainPipeline :
     img = filters.eliminateNoise(img, noiseImg, 0.1)
@@ -182,10 +193,10 @@ if mainPipeline :
 if LBPdenoising :
     # enh = enhancement.fastSMQT(img)
     corr, chi, inr, bha, lbpImg = LBP.eliminateNoise(int(roi[0]), int(roi[1]), roi[2], roi[3],  8, 24, 8, img)
-    # corrI, chiI, inrI, bhaI = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, inr)
-    # corrC, chiC, inrC, bhaC = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, corr)
-    # corrCh, chiCh, inrCh, bhaCh = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, chi)
-    # corrB, chiB, inrB, bhaB = LBP.eliminateNoise(int(roi[0]), int(roi[1]), noiseImg,  8, 24, 8, bha)
+    corrI, chiI, inrI, bhaI, lbpImg = LBP.eliminateNoise(int(roi[0]), int(roi[1]), roi[2], roi[3],  8, 24, 8, inr)
+    corrC, chiC, inrC, bhaC, lbpImg = LBP.eliminateNoise(int(roi[0]), int(roi[1]), roi[2], roi[3],  8, 24, 8, corr)
+    corrCh, chiCh, inrCh, bhaCh, lbpImg = LBP.eliminateNoise(int(roi[0]), int(roi[1]), roi[2], roi[3],  8, 24, 8, chi)
+    corrB, chiB, inrB, bhaB, lbpImg = LBP.eliminateNoise(int(roi[0]), int(roi[1]), roi[2], roi[3],  8, 24, 8, bha)
 
     cv.namedWindow("hist")
     cv.setMouseCallback("hist", click_and_show)
