@@ -156,11 +156,11 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.waitKey(0)
 
     if signalLearning :
-        features = signalTransform.threeLayeredLearning(images, masks)
-        # patterns = np.loadtxt(
-        #     'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_FM.txt',
-        #     delimiter=',')
-        img = img66.copy()
+        # features = signalTransform.threeLayeredLearning(images, masks)
+        features = np.loadtxt(
+            'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_FM.txt',
+            delimiter=',')
+        img = img21.copy()
         windowHeight = 10
         windowWidth = 10
         rep = cv.copyMakeBorder(img, windowHeight, windowHeight, windowWidth, windowWidth, cv.BORDER_REFLECT101)
@@ -182,6 +182,7 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
                     if maxVal < corr:
                         maxVal = corr
                 res[y, x] = maxVal
+            print x
         res = util.normalize(res, 1)
         cv.imwrite(
             'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00066_FM.jpg',

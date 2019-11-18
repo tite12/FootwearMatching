@@ -173,10 +173,10 @@ def threeLayeredLearning(images, masks) :
         #of eachtrainingimage xi, andthethresholdparameter n to
         #determine the proportions of dominant patterns selected from
         #each training image.
-        descriptor = getDominantDescriptors(images[i], masks[i])
+        # descriptor = getDominantDescriptors(images[i], masks[i])
         name = 'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/' + str(i) + '_FM.txt'
         # i = i - 1
-        np.savetxt(name, descriptor, delimiter=',')
+        # np.savetxt(name, descriptor, delimiter=',')
 
         descriptor = np.loadtxt(name, delimiter=',')
         descriptors.append(descriptor)
@@ -236,18 +236,21 @@ def getDominantDescriptors(img, mask, windowWidth = 10, windowHeight = 10, th = 
 
     return dominantDescriptors
 
-def getDiscriminativeFeatures(features, th = 1.4) :
+def getDiscriminativeFeatures(features, th = 1.39) :
     discriminativeFeatures = features[0]
-
-    for patches in range(1, len(features)) :
+    i = 1
+    while i < len(features) :
+        print{"..."}
+        patches = features[i]
         intersection = []
         for feature in discriminativeFeatures:
             for patch in patches:
-                corr = correlation(feature, corr)
-                print corr
+                corr = correlation(feature, patch)
+                # print corr
                 if corr > th :
                     intersection.append(patch)
                     break
         discriminativeFeatures = intersection
+        i += 1
 
     return discriminativeFeatures
