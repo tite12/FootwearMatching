@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 import math
 import scipy.ndimage.interpolation as ndii
+import operator
 import util
 import histogramOperations
 
@@ -121,12 +122,6 @@ def calculateFourierMellin(img) :
     return imgLogPolarComplexMags
 
 def eliminateNoise(img, noise) :
-    # img = calculateFourierMellin(img)
-    # img = np.uint8(util.normalize(img, 255))
-    # img = histogramOperations.equalizeHistogram(img)
-    # cv.imshow("F-M", img)
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()
     noiseHeight, noiseWidth = noise.shape
     if noiseWidth % 2 == 1 :
         noiseWidth =  noiseWidth - 1
@@ -141,24 +136,15 @@ def eliminateNoise(img, noise) :
     result = np.zeros((height, width), np.float32)
 
     rep = cv.copyMakeBorder(img, noiseHeight, noiseHeight, noiseWidth, noiseWidth, cv.BORDER_REFLECT101)
-    # cv.imshow("noise", rep)
-    # cv.waitKey(0)
     for x in range(width):
         xInd = x + noiseWidth
-        # if x - noiseWidth < 0 or x + noiseWidth > width:
-        #     continue
         for y in range(height):
             yInd = y + noiseHeight
-            # if y - noiseHeight < 0 or y + noiseHeight > height :
-            #     continue
             currentPatch = rep[yInd-noiseHeight:yInd+noiseHeight, xInd-noiseWidth:xInd+noiseWidth]
             imgFM = calculateFourierMellin(currentPatch)
             imgMean = np.mean(imgFM)
             imgFM = imgFM - imgMean
-            # cv.imshow('img', imgFM)
-            # cv.waitKey(0)
             corr = correlation(imgFM, noiseFM)
-            # print(corr)
             result[y, x] = corr
 
         print x
@@ -176,3 +162,92 @@ def correlation(img, noise) :
     denominator = math.sqrt(denominator)
     corr = numerator / denominator
     return corr
+
+def threeLayeredLearning(images, masks) :
+    descriptors = []
+    # i = (len(images)) - 1
+    for i in range(len(images)) :
+    # while i >= 0 :
+        print("first Layer")
+        #Thehistogram f!i of the original pattern sets of interest
+        #of eachtrainingimage xi, andthethresholdparameter n to
+        #determine the proportions of dominant patterns selected from
+        #each training image.
+        descriptor = getDominantDescriptors(images[i], masks[i])
+        name = 'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/' + str(i) + '_FM.txt'
+        # i = i - 1
+        np.savetxt(name, descriptor, delimiter=',')
+
+        descriptor = np.loadtxt(name, delimiter=',')
+        descriptors.append(descriptor)
+    #Dominantpatternsets J1, J2,y, Jnj of nj images belonging to class j obtained from Algorithm 1.
+    print("second Layer")
+    descriptors = getDiscriminativeFeatures(descriptors)
+    name = 'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_FM.txt'
+    np.savetxt(name, descriptors, delimiter=',')
+    #Thediscriminativedominantpatternset JCj for each class j  obtained from Algorithm 2.
+    #since we only have one class we dont need this step
+    # getGlobalFeatures()
+    return descriptors
+
+def getDominantDescriptors(img, mask, windowWidth = 10, windowHeight = 10, th = 1.4) :
+    rep = cv.copyMakeBorder(img, windowHeight, windowHeight, windowWidth, windowWidth, cv.BORDER_REFLECT101)
+    height, width = img.shape
+
+    fmDescriptors = []
+    for y in range(height) :
+        yInd = y + windowHeight
+        for x in range(width) :
+            if mask[y, x] == 0 :
+                continue
+            xInd = x + windowWidth
+            currentPatch = rep[yInd - windowHeight:yInd + windowHeight, xInd - windowWidth:xInd + windowWidth]
+            imgFM = calculateFourierMellin(currentPatch)
+            imgMean = np.mean(imgFM)
+            #this line might be unnecessary when using other comparison methods
+            imgFM = imgFM - imgMean
+            imgFM = imgFM.flatten()
+            fmDescriptors.append(imgFM)
+
+    similarDescriptors = {}
+    count = 0
+    for currentPatch in fmDescriptors:
+        similarFound = False
+        if count > 7000 :
+            break
+        print count
+        count = count + 1
+        for i in similarDescriptors:
+            corr = correlation(currentPatch, np.asarray(i))
+            if corr > th:
+                similarDescriptors[i] = similarDescriptors[i] + 1
+                similarFound = True
+                break
+        if not similarFound :
+            tup = tuple(currentPatch)
+            similarDescriptors[tup] = 1
+
+    sortedDescriptors = sorted(similarDescriptors.items(), key=operator.itemgetter(1))
+    dominantDescriptors = []
+    for currentPatch in reversed(sortedDescriptors) :
+        if sortedDescriptors[1] < 10 :
+            break
+        dominantDescriptors.append(np.asarray(currentPatch[0]))
+
+    return dominantDescriptors
+
+def getDiscriminativeFeatures(features, th = 1.4) :
+    discriminativeFeatures = features[0]
+
+    for patches in range(1, len(features)) :
+        intersection = []
+        for feature in discriminativeFeatures:
+            for patch in patches:
+                corr = correlation(feature, corr)
+                print corr
+                if corr > th :
+                    intersection.append(patch)
+                    break
+        discriminativeFeatures = intersection
+
+    return discriminativeFeatures

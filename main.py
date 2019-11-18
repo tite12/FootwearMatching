@@ -20,9 +20,10 @@ LBPLearning = False
 mainPipeline = False
 SIFTdescriptor = False
 HOGdescriptor = False
-pixelDescriptors = False
 lbpImg = np.empty((0, 0))
-signal = True
+signal = False
+signalLearning = True
+
 
 def click_and_show(event, x, y, flags, param) :
     global lbpImg
@@ -33,7 +34,7 @@ def click_and_show(event, x, y, flags, param) :
         plt.plot(hist)
         plt.show()
 
-if pixelDescriptors :
+if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
     img3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
     img9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009.jpg', 0)
     img17 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017.jpg', 0)
@@ -128,31 +129,66 @@ if pixelDescriptors :
         cv.waitKey(0)
         cv.destroyAllWindows()
 
-if LBPLearning :
-    patterns = LBP.threeLayeredLearning(images, masks)
-    patterns = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_6_24_5.txt', delimiter=',')
-    img = img66.copy()
-    lbpImage = LBP.getLBPImage(img, 6, 24, 5)
-    height, width = img.shape
-    res = np.zeros((height, width), np.float32)
-    print("calculating")
-    for x in range(width):
-        for y in range(height):
-            currentHisogram = lbpImage[y, x]
-            currentHisogram = np.float32(currentHisogram)
-            maxVal = 0
-            for pattern in patterns :
-                val = cv.compareHist(currentHisogram, np.float32(np.asarray(pattern)), cv.HISTCMP_CORREL)
-                # if val > 0.75:
-                #     res[y, x] = 1
-                #     continue
-                if maxVal < val :
-                    maxVal = val
-            res[y, x] = maxVal
-    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00066_6_24_5.jpg', res * 255)
-    cv.imshow("res", res)
-    cv.imshow("res2", img - np.uint8((1 - res) * 255))
-    cv.waitKey(0)
+    if LBPLearning :
+        patterns = LBP.threeLayeredLearning(images, masks)
+        patterns = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_6_24_5.txt', delimiter=',')
+        img = img66.copy()
+        lbpImage = LBP.getLBPImage(img, 6, 24, 5)
+        height, width = img.shape
+        res = np.zeros((height, width), np.float32)
+        print("calculating")
+        for x in range(width):
+            for y in range(height):
+                currentHisogram = lbpImage[y, x]
+                currentHisogram = np.float32(currentHisogram)
+                maxVal = 0
+                for pattern in patterns :
+                    val = cv.compareHist(currentHisogram, np.float32(np.asarray(pattern)), cv.HISTCMP_CORREL)
+                    # if val > 0.75:
+                    #     res[y, x] = 1
+                    #     continue
+                    if maxVal < val :
+                        maxVal = val
+                res[y, x] = maxVal
+        cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00066_6_24_5.jpg', res * 255)
+        cv.imshow("res", res)
+        cv.imshow("res2", img - np.uint8((1 - res) * 255))
+        cv.waitKey(0)
+
+    if signalLearning :
+        features = signalTransform.threeLayeredLearning(images, masks)
+        # patterns = np.loadtxt(
+        #     'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_FM.txt',
+        #     delimiter=',')
+        img = img66.copy()
+        windowHeight = 10
+        windowWidth = 10
+        rep = cv.copyMakeBorder(img, windowHeight, windowHeight, windowWidth, windowWidth, cv.BORDER_REFLECT101)
+        height, width = img.shape
+        res = np.zeros((height, width), np.float32)
+        print("calculating")
+        for x in range(width):
+            xInd = x + windowWidth
+            for y in range(height):
+                yInd = y + windowHeight
+                currentPatch = rep[yInd - windowHeight:yInd + windowHeight, xInd - windowWidth:xInd + windowWidth]
+                imgFM = signalTransform.calculateFourierMellin(currentPatch)
+                imgMean = np.mean(imgFM)
+                imgFM = imgFM - imgMean
+                imgFM = imgFM.flatten()
+                maxVal = 0
+                for feature in features:
+                    corr = corr = signalTransform.correlation(imgFM, feature)
+                    if maxVal < corr:
+                        maxVal = corr
+                res[y, x] = maxVal
+        res = util.normalize(res, 1)
+        cv.imwrite(
+            'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00066_FM.jpg',
+            res * 255)
+        cv.imshow("res", res)
+        cv.imshow("res2", img - np.uint8((1 - res) * 255))
+        cv.waitKey(0)
 
 img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182.jpg', 0)
 
