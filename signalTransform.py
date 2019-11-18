@@ -139,14 +139,19 @@ def eliminateNoise(img, noise) :
     noiseFM = noiseFM - noiseMean
     height, width = img.shape
     result = np.zeros((height, width), np.float32)
-    # cv.imshow("noise", noiseFM)
+
+    rep = cv.copyMakeBorder(img, noiseHeight, noiseHeight, noiseWidth, noiseWidth, cv.BORDER_REFLECT101)
+    # cv.imshow("noise", rep)
+    # cv.waitKey(0)
     for x in range(width):
-        if x - noiseWidth < 0 or x + noiseWidth > width:
-            continue
+        xInd = x + noiseWidth
+        # if x - noiseWidth < 0 or x + noiseWidth > width:
+        #     continue
         for y in range(height):
-            if y - noiseHeight < 0 or y + noiseHeight > height :
-                continue
-            currentPatch = img[y-noiseHeight:y+noiseHeight, x-noiseWidth:x+noiseWidth]
+            yInd = y + noiseHeight
+            # if y - noiseHeight < 0 or y + noiseHeight > height :
+            #     continue
+            currentPatch = rep[yInd-noiseHeight:yInd+noiseHeight, xInd-noiseWidth:xInd+noiseWidth]
             imgFM = calculateFourierMellin(currentPatch)
             imgMean = np.mean(imgFM)
             imgFM = imgFM - imgMean
