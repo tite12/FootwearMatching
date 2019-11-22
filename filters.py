@@ -8,6 +8,7 @@ from scipy.signal import convolve2d
 from numpy import linalg as la
 from scipy.spatial import distance
 
+import operator
 import histogramOperations
 import doThresholding
 import enhancement
@@ -113,59 +114,77 @@ def regionBasedNonLocalMeans(img, noiseMask, mod) :
         # diffImg[diffImg == np.nan] = 0
         cv.imshow("after", histogramOperations.equalizeHistogram(np.uint8(util.normalize(diffImg, 255))))
         cv.waitKey(0)
+
+    # diffImg = np.uint8(util.normalize(diffImg, 255))
+    # diffImg = histogramOperations.equalizeHistogram(diffImg)
     height, width = img.shape
     res = np.zeros(img.shape, np.uint8)
-    mask = np.zeros(img.shape, np.uint8)
     min, max, minLoc, maxLoc = cv.minMaxLoc(diffImg)
     thresholds = []
     masks = []
     mapping = np.zeros(img.shape, np.uint8)
-    classes = 35
+    classes = 25
+    maskSize = {}
+    maskSize[0] = 0
     for i in range(1, classes + 1) :
         thresholds.append(calcTh(i, min, max, classes))
         masks.append(np.zeros(img.shape, np.uint8))
-    grayVal = 255/classes
+        if i < classes :
+            maskSize[i] = 0
+
     for x in range(width):
         for y in range(height):
-            currentVal = diffImg[y, x]
-            index = 0
-            for th in thresholds :
+            if noiseMask[y, x] == 1 :
+                currentVal = diffImg[y, x]
+                index = 0
+                for th in thresholds :
 
-                if index == 0 and currentVal < th:
-                    setPixel(masks[index], x, y, 255)
-                    mapping[y, x] = index
-                    break
-                # res[y, x] = grayVal * index
-                # setPixel(res, x, y, grayVal * index, 9)
-                setPixel(mask, x, y, 255)
+                    if index == 0 and currentVal < th:
+                        setPixel(masks[index], x, y, 255, 1)
+                        mapping[y, x] = index
+                        maskSize[index] = maskSize[index] + 1
+                        break
 
-                if index > 0 and currentVal > thresholds[index-1] and currentVal <= th  :
-                    setPixel(masks[index], x, y, 255)
-                    mapping[y, x] = index
-                    break
-                index += 1
+                    if index > 0 and currentVal > thresholds[index-1] and currentVal <= th  :
+                        setPixel(masks[index], x, y, 255, 1)
+                        mapping[y, x] = index
+                        maskSize[index] = maskSize[index] + 1
+                        break
+                    index += 1
 
 
     means = []
-    dataPixels = np.sum(1 - noiseMask)
-    dataPixels = dataPixels * 0.05
+    majorMeans = []
+    dataPixels = np.sum(noiseMask)
+    dataPixels = dataPixels * 0.5
     print("Threshold")
     print(dataPixels)
 
+    sortedMaskSize = sorted(maskSize.items(), key=operator.itemgetter(1))
 
     for maskImg in masks :
         mean = cv.mean(img, maskImg)
-        sum = np.sum(maskImg / 255)
-        print sum
-        if sum > dataPixels:
-            means.append(mean[0])
-        else :
-            means.append(0)
+        means.append(mean[0])
+        majorMeans.append(0)
+        # sum = np.sum(maskImg / 255)
+        # print sum
+        # if sum > dataPixels:
+        #     means.append(mean[0])
+        # else :
+        #     means.append(0)
         # cv.imshow("maskImg", maskImg)
         # cv.waitKey(0)
+
+    pixels = 0
+    for m in (sortedMaskSize) :
+        pixels += m[1]
+        majorMeans[m[0]] = means[m[0]]
+        if pixels > dataPixels :
+            break
     for x in range(width):
         for y in range(height):
-            res[y,x] = means[mapping[y, x]]
+            if noiseMask[y, x] == 1 :
+                res[y,x] = majorMeans[mapping[y, x]]
     # resLocal = np.zeros(res.shape, np.uint8)
     # n = 30
     # for x in range(width):
@@ -217,27 +236,28 @@ def calcTh(var, lMin, lMax, n) :
 
 def setPixel(img, x, y, val, nb = 5) :
     img[y, x] = val
-    height, width = img.shape
-    if x > 0 :
-        img[y, x-1] = val
-        if nb == 9 :
-            if y > 0 :
-                img[y-1, x - 1] = val
-            if y < height - 1:
-                img[y + 1, x-1] = val
+    if nb > 1 :
+        height, width = img.shape
+        if x > 0 :
+            img[y, x-1] = val
+            if nb == 9 :
+                if y > 0 :
+                    img[y-1, x - 1] = val
+                if y < height - 1:
+                    img[y + 1, x-1] = val
 
-    if x < width - 1 :
-        img[y, x+1] = val
-        if nb == 9:
-            if y > 0 :
-                img[y-1, x + 1] = val
-            if y < height - 1:
-                img[y + 1, x+1] = val
+        if x < width - 1 :
+            img[y, x+1] = val
+            if nb == 9:
+                if y > 0 :
+                    img[y-1, x + 1] = val
+                if y < height - 1:
+                    img[y + 1, x+1] = val
 
-    if y > 0 :
-        img[y - 1, x] = val
-    if y < height - 1 :
-        img[y+1, x] = val
+        if y > 0 :
+            img[y - 1, x] = val
+        if y < height - 1 :
+            img[y+1, x] = val
     return img
 
 def plow(img) :

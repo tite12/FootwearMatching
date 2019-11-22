@@ -215,7 +215,7 @@ noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 mask = np.ones(img.shape, np.uint8)
 
 if signal:
-    corr = signalTransform.eliminateNoise(img, roi[0], roi[1] )
+    corr = signalTransform.eliminateNoise(img, roi[0], roi[1], 6 )
     corr = np.uint8(util.normalize(corr, 255))
     # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204_corr.jpg', corr)
     # corr = noiseImg
@@ -235,7 +235,7 @@ if signal:
 
 if mainPipeline :
     # img = filters.eliminateNoise(img, noiseImg, 0.1)
-    smqt = enhancement.fastSMQT(img)
+    # smqt = enhancement.fastSMQT(img)
     # smqt = filters.nonLocalGrouping(img, noiseImg)
     # img = filters.nonLocalGrouping(img, noiseImg)
 
@@ -248,13 +248,14 @@ if mainPipeline :
     # img[img < mean] = 0
     # img[img == np.nan] = 0
     img = np.uint8(util.normalize(img, 255))
-
+    otsu = doThresholding.otsuThreshold(img)
 
     # img[img >= 10] = 255
     # smqt = np.uint8(util.normalize(smqt, 255))
     # smqt[smqt >= 20] = 255
     # cv.imshow("smqt", histogramOperations.equalizeHistogram(smqt))
     cv.imshow("img", histogramOperations.equalizeHistogram(img))
+    cv.imshow("otsu", otsu)
     cv.waitKey(0)
     # nonLocalMeans = filters.regionBasedNonLocalMeans(img, noiseImg, np.zeros((0, 0)))
     # nonLocalMeans = filters.regionBasedNonLocalMeans(img, noiseImg, True)
