@@ -121,14 +121,14 @@ def calculateFourierMellin(img) :
 
     return imgLogPolarComplexMags
 
-def eliminateNoise(img, x, y, windowSize =20) :
+def eliminateNoise(img, xNoise, yNoise, windowSize = 6, otherScales = True) :
     noiseHeight = windowSize
     noiseWidth = windowSize
     if noiseWidth % 2 == 1 :
         noiseWidth =  noiseWidth - 1
     if noiseHeight % 2 == 1 :
         noiseHeight = noiseHeight - 1
-    noiseFM = calculateFourierMellin(img[y:y + noiseHeight, x:x + noiseWidth])
+    noiseFM = calculateFourierMellin(img[yNoise:yNoise + noiseHeight, xNoise:xNoise + noiseWidth])
     noiseWidth = noiseWidth / 2
     noiseHeight = noiseHeight / 2
     noiseMean = np.mean(noiseFM)
@@ -149,6 +149,14 @@ def eliminateNoise(img, x, y, windowSize =20) :
             result[y, x] = corr
 
         print x
+
+    result2X = np.zeros((height, width))
+    result3X = np.zeros((height, width))
+    if otherScales :
+        result2X = eliminateNoise(img, xNoise, yNoise, 2 * windowSize, False)
+        result3X = eliminateNoise(img, xNoise, yNoise, 3 * windowSize, False)
+        result = result + result2X + result3X
+        result = result / 3
     return result
 
 def correlation(img, noise) :

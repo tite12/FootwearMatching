@@ -229,9 +229,9 @@ if signal:
     # diffTh[diffTh < 0] = 0
 
     # img = np.uint8(diffTh)
-    cv.imshow("mask", mask)
-    cv.imshow("th", th)
-    cv.waitKey(0)
+    # cv.imshow("mask", mask)
+    # cv.imshow("th", th)
+    # cv.waitKey(0)
 
 if mainPipeline :
     # img = filters.eliminateNoise(img, noiseImg, 0.1)
@@ -254,6 +254,7 @@ if mainPipeline :
     # smqt = np.uint8(util.normalize(smqt, 255))
     # smqt[smqt >= 20] = 255
     # cv.imshow("smqt", histogramOperations.equalizeHistogram(smqt))
+    img[img == 0] = 255
     cv.imshow("img", histogramOperations.equalizeHistogram(img))
     cv.imshow("otsu", otsu)
     cv.waitKey(0)
@@ -265,7 +266,8 @@ if mainPipeline :
     # cv.destroyAllWindows()
     #
     # equal = histogramOperations.equalizeHistogram(nonLocalMeans)
-    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241nlm_smqt.jpg', equal)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241_filtered.jpg', img)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241_noise.jpg', (1 - mask) * 255)
     #
     # cv.imshow("equalized non-local mean", equal)
     # cv.waitKey(0)

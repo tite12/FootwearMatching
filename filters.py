@@ -115,52 +115,68 @@ def regionBasedNonLocalMeans(img, noiseMask, mod) :
         cv.imshow("after", histogramOperations.equalizeHistogram(np.uint8(util.normalize(diffImg, 255))))
         cv.waitKey(0)
 
+    res = np.zeros(diffImg.shape, np.uint8)
+
     # diffImg = np.uint8(util.normalize(diffImg, 255))
     # diffImg = histogramOperations.equalizeHistogram(diffImg)
-    height, width = img.shape
-    res = np.zeros(img.shape, np.uint8)
-    min, max, minLoc, maxLoc = cv.minMaxLoc(diffImg)
-    thresholds = []
-    masks = []
-    mapping = np.zeros(img.shape, np.uint8)
+    # height, width = diffImg.shape
+    # res = np.zeros(img.shape, np.uint8)
+    # min, max, minLoc, maxLoc = cv.minMaxLoc(diffImg)
+    # thresholds = []
+    # masks = []
+    # mapping = np.zeros(diffImg.shape, np.uint8)
+    # classes = 25
+    # maskSize = {}
+    # maskSize[0] = 0
+    # for i in range(1, classes + 1) :
+    #     thresholds.append(calcTh(i, min, max, classes))
+    #     masks.append(np.zeros(img.shape, np.uint8))
+    #     if i < classes :
+    #         maskSize[i] = 0
+    #
+    # for x in range(width):
+    #     for y in range(height):
+    #         if noiseMask[y, x] == 1 :
+    #             currentVal = diffImg[y, x]
+    #             index = 0
+    #             for th in thresholds :
+    #
+    #                 if index == 0 and currentVal < th:
+    #                     setPixel(masks[index], x, y, 255, 1)
+    #                     mapping[y, x] = index
+    #                     maskSize[index] = maskSize[index] + 1
+    #                     break
+    #
+    #                 if index > 0 and currentVal > thresholds[index-1] and currentVal <= th  :
+    #                     setPixel(masks[index], x, y, 255, 1)
+    #                     mapping[y, x] = index
+    #                     maskSize[index] = maskSize[index] + 1
+    #                     break
+    #                 index += 1
     classes = 25
-    maskSize = {}
-    maskSize[0] = 0
-    for i in range(1, classes + 1) :
-        thresholds.append(calcTh(i, min, max, classes))
-        masks.append(np.zeros(img.shape, np.uint8))
-        if i < classes :
-            maskSize[i] = 0
+    maskSize, masks, mapping = fillClasses(diffImg, noiseMask, classes)
 
-    for x in range(width):
-        for y in range(height):
-            if noiseMask[y, x] == 1 :
-                currentVal = diffImg[y, x]
-                index = 0
-                for th in thresholds :
+    sortedMaskSize = sorted(maskSize.items(), key=operator.itemgetter(1))
 
-                    if index == 0 and currentVal < th:
-                        setPixel(masks[index], x, y, 255, 1)
-                        mapping[y, x] = index
-                        maskSize[index] = maskSize[index] + 1
-                        break
+    dataPixels = np.sum(noiseMask)
+    dataPixels = dataPixels * 0.7
 
-                    if index > 0 and currentVal > thresholds[index-1] and currentVal <= th  :
-                        setPixel(masks[index], x, y, 255, 1)
-                        mapping[y, x] = index
-                        maskSize[index] = maskSize[index] + 1
-                        break
-                    index += 1
-
+    print("recalculate?")
+    print(int(sortedMaskSize[-1][1]))
+    print dataPixels
+    if sortedMaskSize[-1][1] > dataPixels :
+        diffImg = np.uint8(util.normalize(diffImg, 255))
+        diffImg = histogramOperations.equalizeHistogram(diffImg)
+        maskSize, masks, mapping = fillClasses(diffImg, noiseMask, classes)
+        sortedMaskSize = sorted(maskSize.items(), key=operator.itemgetter(1))
+        print("I was here")
 
     means = []
     majorMeans = []
-    dataPixels = np.sum(noiseMask)
-    dataPixels = dataPixels * 0.5
     print("Threshold")
     print(dataPixels)
 
-    sortedMaskSize = sorted(maskSize.items(), key=operator.itemgetter(1))
+
 
     for maskImg in masks :
         mean = cv.mean(img, maskImg)
@@ -181,6 +197,8 @@ def regionBasedNonLocalMeans(img, noiseMask, mod) :
         majorMeans[m[0]] = means[m[0]]
         if pixels > dataPixels :
             break
+
+    height, width = img.shape
     for x in range(width):
         for y in range(height):
             if noiseMask[y, x] == 1 :
@@ -230,6 +248,43 @@ def regionBasedNonLocalMeans(img, noiseMask, mod) :
     # cv.destroyAllWindows()
 
     return res
+
+def fillClasses(diffImg, noiseMask, classes) :
+    height, width = diffImg.shape
+    min, max, minLoc, maxLoc = cv.minMaxLoc(diffImg)
+    thresholds = []
+    masks = []
+    mapping = np.zeros(diffImg.shape, np.uint8)
+    maskSize = {}
+    maskSize[0] = 0
+
+    for i in range(1, classes + 1) :
+        thresholds.append(calcTh(i, min, max, classes))
+        masks.append(np.zeros(diffImg.shape, np.uint8))
+        if i < classes :
+            maskSize[i] = 0
+
+    for x in range(width):
+        for y in range(height):
+            if noiseMask[y, x] == 1 :
+                currentVal = diffImg[y, x]
+                index = 0
+                for th in thresholds :
+
+                    if index == 0 and currentVal < th:
+                        setPixel(masks[index], x, y, 255, 1)
+                        mapping[y, x] = index
+                        maskSize[index] = maskSize[index] + 1
+                        break
+
+                    if index > 0 and currentVal > thresholds[index-1] and currentVal <= th  :
+                        setPixel(masks[index], x, y, 255, 1)
+                        mapping[y, x] = index
+                        maskSize[index] = maskSize[index] + 1
+                        break
+                    index += 1
+
+    return maskSize, masks, mapping
 
 def calcTh(var, lMin, lMax, n) :
     return lMin + (var * (lMax-lMin)/n)
