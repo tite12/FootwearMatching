@@ -17,12 +17,12 @@ import signalTransform
 firstVersionPreprocessing = False
 LBPdenoising = False
 LBPLearning = False
-mainPipeline = False
+mainPipeline = True
 SIFTdescriptor = False
 HOGdescriptor = False
 lbpImg = np.empty((0, 0))
-signal = False
-signalLearning = True
+signal = True
+signalLearning = False
 
 
 def click_and_show(event, x, y, flags, param) :
@@ -60,6 +60,19 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
     # mask66 =  np.float32(mask66)
     # cv.imshow("mask", mask66)
     # cv.waitKey(0)
+
+    test = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00025_FM.jpg', 0)
+
+    # cv.imshow("orig", img25)
+    # cv.imshow("mask", test)
+    # th = doThresholding.otsuThreshold(test)
+    # cv.imshow("th", th)
+    # cv.imshow("diff", img25 - test)
+    # diffTh = np.float32(img25) - np.float32(th)
+    # diffTh = util.normalize(diffTh, 1)
+    # cv.imshow("diffTh", diffTh)
+    # cv.waitKey(0)
+
     masks = [mask66, mask3, img9, mask17, mask20, mask21, mask25]
 
     images = [img66, img3, img9, img17, img20, img21, img25]
@@ -160,9 +173,9 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         features = np.loadtxt(
             'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_FM.txt',
             delimiter=',')
-        img = img21.copy()
-        windowHeight = 10
-        windowWidth = 10
+        img = img25.copy()
+        windowHeight = 5
+        windowWidth = 5
         rep = cv.copyMakeBorder(img, windowHeight, windowHeight, windowWidth, windowWidth, cv.BORDER_REFLECT101)
         height, width = img.shape
         res = np.zeros((height, width), np.float32)
@@ -185,44 +198,79 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
             print x
         res = util.normalize(res, 1)
         cv.imwrite(
-            'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00066_FM.jpg',
+            'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00025_FM_window5.jpg',
             res * 255)
         cv.imshow("res", res)
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00182.jpg', 0)
-
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241.jpg', 0)
+# en = enhancement.fastSMQT(img)
 roi = cv.selectROI("Select noise area", img)
-
-# cv.destroyAllWindows()
+#
+# # cv.destroyAllWindows()
 noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
+# noiseImg = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204_corr.jpg', 0)
+mask = np.ones(img.shape, np.uint8)
+
 if signal:
-    corr = signalTransform.eliminateNoise(img, noiseImg)
+    corr = signalTransform.eliminateNoise(img, roi[0], roi[1] )
     corr = np.uint8(util.normalize(corr, 255))
-    equalized = histogramOperations.equalizeHistogram(corr)
-    cv.imshow("F-M", corr)
-    cv.imshow("equalized F-M", equalized)
+    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204_corr.jpg', corr)
+    # corr = noiseImg
+    th = doThresholding.otsuThreshold(corr)
+    kernel = np.ones((8,8),np.uint8)
+    morph = cv.morphologyEx(th, cv.MORPH_OPEN, kernel)
+    morph = cv.morphologyEx(morph, cv.MORPH_CLOSE, kernel)
+    mask = util.normalize(morph, 1)
+    # diffTh = np.float32(img) - np.float32(th)
+    # diffTh[diffTh > 255] = 255
+    # diffTh[diffTh < 0] = 0
+
+    # img = np.uint8(diffTh)
+    cv.imshow("mask", mask)
+    cv.imshow("th", th)
     cv.waitKey(0)
-    cv.destroyAllWindows()
 
 if mainPipeline :
-    img = filters.eliminateNoise(img, noiseImg, 0.1)
-    nonLocalMeans = filters.regionBasedNonLocalMeans(img, np.zeros((0, 0)))
+    # img = filters.eliminateNoise(img, noiseImg, 0.1)
+    smqt = enhancement.fastSMQT(img)
+    # smqt = filters.nonLocalGrouping(img, noiseImg)
+    # img = filters.nonLocalGrouping(img, noiseImg)
 
-    cv.imshow("non-local mean", nonLocalMeans)
+    # smqt = filters.regionBasedNonLocalMeans(img, 1 - mask, False)
+    img = filters.regionBasedNonLocalMeans(img, 1 - mask, False)
+
+    # med = np.median(img)
+    # img[img < med] = np.nan
+    # mean = np.nanmean(img)
+    # img[img < mean] = 0
+    # img[img == np.nan] = 0
+    img = np.uint8(util.normalize(img, 255))
+
+
+    # img[img >= 10] = 255
+    # smqt = np.uint8(util.normalize(smqt, 255))
+    # smqt[smqt >= 20] = 255
+    # cv.imshow("smqt", histogramOperations.equalizeHistogram(smqt))
+    cv.imshow("img", histogramOperations.equalizeHistogram(img))
     cv.waitKey(0)
-    cv.destroyAllWindows()
+    # nonLocalMeans = filters.regionBasedNonLocalMeans(img, noiseImg, np.zeros((0, 0)))
+    # nonLocalMeans = filters.regionBasedNonLocalMeans(img, noiseImg, True)
 
-    equal = histogramOperations.equalizeHistogram(nonLocalMeans)
-    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241nlm_smqt.jpg', equal)
-
-    cv.imshow("equalized non-local mean", equal)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # cv.imshow("non-local mean", nonLocalMeans)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
     #
-    normal = LBP.classify(img.copy(), 9, 24, 8, False)
+    # equal = histogramOperations.equalizeHistogram(nonLocalMeans)
+    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241nlm_smqt.jpg', equal)
+    #
+    # cv.imshow("equalized non-local mean", equal)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
+    # #
+    # normal = LBP.classify(img.copy(), 9, 24, 8, False)
     # ptp = LBP.classify(img.copy(), 9, 24, 8, True)
     # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_lbp.jpg', normal)
     # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_ptp.jpg', ptp)

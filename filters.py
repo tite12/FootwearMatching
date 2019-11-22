@@ -10,6 +10,7 @@ from scipy.spatial import distance
 
 import histogramOperations
 import doThresholding
+import enhancement
 
 def watershed(img) :
 
@@ -71,12 +72,12 @@ def nonLocalMeans(img) :
     return dst
 
 def nonLocalGrouping(img) :
-    gradX = cv.Sobel(img, cv.CV_16S, 1, 0)
-    gradY = cv.Sobel(img, cv.CV_16S, 0, 1)
+    blur = cv.GaussianBlur(img, (11, 11), 0)
+    gradX = cv.Sobel(blur, cv.CV_16S, 1, 0)
+    gradY = cv.Sobel(blur, cv.CV_16S, 0, 1)
     cv.convertScaleAbs(gradX, gradX)
     cv.convertScaleAbs(gradY, gradY)
 
-    # TODO: gaussian kernel
     diffImg = np.zeros(img.shape)
     height, width = img.shape
     for x in range(width):
@@ -93,10 +94,25 @@ def nonLocalGrouping(img) :
             diffImg[y, x] = abs(eigVal1 - eigVal2)
     return diffImg
 
-def regionBasedNonLocalMeans(img, maskk, useMask = False) :
-    diffImg = maskk
-    if not useMask :
-        diffImg = nonLocalGrouping(img)
+def regionBasedNonLocalMeans(img, noiseMask, mod) :
+    diffImg = nonLocalGrouping(img)
+    cv.imshow("before", histogramOperations.equalizeHistogram(np.uint8(util.normalize(diffImg, 255))))
+    diffImg = diffImg * noiseMask
+    # diffImg = enhancement.fastSMQT(diffImg)
+    cv.imshow("masked", histogramOperations.equalizeHistogram(np.uint8(util.normalize(diffImg, 255))))
+
+    if mod :
+        tmp = diffImg
+        tmp[tmp == 0] = np.nan
+        med = np.nanmean(tmp)
+        tmp[tmp > med] = np.nan
+        med = np.nanmean(tmp)
+        diffImg[diffImg < med] = 0
+        # mean = np.nanmean(diffImg)
+        # diffImg[diffImg < mean] = 0
+        # diffImg[diffImg == np.nan] = 0
+        cv.imshow("after", histogramOperations.equalizeHistogram(np.uint8(util.normalize(diffImg, 255))))
+        cv.waitKey(0)
     height, width = img.shape
     res = np.zeros(img.shape, np.uint8)
     mask = np.zeros(img.shape, np.uint8)
@@ -104,7 +120,7 @@ def regionBasedNonLocalMeans(img, maskk, useMask = False) :
     thresholds = []
     masks = []
     mapping = np.zeros(img.shape, np.uint8)
-    classes = 45
+    classes = 35
     for i in range(1, classes + 1) :
         thresholds.append(calcTh(i, min, max, classes))
         masks.append(np.zeros(img.shape, np.uint8))
@@ -131,51 +147,61 @@ def regionBasedNonLocalMeans(img, maskk, useMask = False) :
 
 
     means = []
+    dataPixels = np.sum(1 - noiseMask)
+    dataPixels = dataPixels * 0.05
+    print("Threshold")
+    print(dataPixels)
+
+
     for maskImg in masks :
         mean = cv.mean(img, maskImg)
-        means.append(mean[0])
+        sum = np.sum(maskImg / 255)
+        print sum
+        if sum > dataPixels:
+            means.append(mean[0])
+        else :
+            means.append(0)
+        # cv.imshow("maskImg", maskImg)
+        # cv.waitKey(0)
     for x in range(width):
         for y in range(height):
             res[y,x] = means[mapping[y, x]]
-    resLocal = np.zeros(res.shape, np.uint8)
-    n = 30
-    for x in range(width):
-        for y in range(height):
-            currentMask = np.zeros(res.shape, np.uint8)
-            roiX = 0
-            roiY = 0
-            roiWidth =0
-            roiHeight = 0
-            if x < n :
-                roiX = 0
-                roiWidth = n + x
-            else :
-                roiX = x - n
-                if x + n > width :
-                    roiWidth = n + (width - x)
-                else :
-                    roiWidth = 2 * n
-
-            if y < n :
-                roiY = 0
-                roiHeight = y + n
-            else :
-                roiY = y - n
-                if y + n > height :
-                    roiHeight = n + (height - y)
-                else :
-                    roiHeight = 2 * n
-            truncated = masks[mapping[y, x]][roiY:roiY+roiHeight, roiX:roiX+roiWidth]
-            currentMask[roiY:roiY+roiHeight, roiX:roiX+roiWidth] = truncated
-            # cv.imshow("truncated", truncated)
-            # cv.imshow("current Mask", currentMask)
-            # cv.waitKey(0)
-            # cv.destroyAllWindows()
-            mean = cv.mean(img, currentMask)
-            resLocal[y, x] = mean[0]
-
-
-
+    # resLocal = np.zeros(res.shape, np.uint8)
+    # n = 30
+    # for x in range(width):
+    #     for y in range(height):
+    #         currentMask = np.zeros(res.shape, np.uint8)
+    #         roiX = 0
+    #         roiY = 0
+    #         roiWidth =0
+    #         roiHeight = 0
+    #         if x < n :
+    #             roiX = 0
+    #             roiWidth = n + x
+    #         else :
+    #             roiX = x - n
+    #             if x + n > width :
+    #                 roiWidth = n + (width - x)
+    #             else :
+    #                 roiWidth = 2 * n
+    #
+    #         if y < n :
+    #             roiY = 0
+    #             roiHeight = y + n
+    #         else :
+    #             roiY = y - n
+    #             if y + n > height :
+    #                 roiHeight = n + (height - y)
+    #             else :
+    #                 roiHeight = 2 * n
+    #         truncated = masks[mapping[y, x]][roiY:roiY+roiHeight, roiX:roiX+roiWidth]
+    #         currentMask[roiY:roiY+roiHeight, roiX:roiX+roiWidth] = truncated
+    #         # cv.imshow("truncated", truncated)
+    #         # cv.imshow("current Mask", currentMask)
+    #         # cv.waitKey(0)
+    #         # cv.destroyAllWindows()
+    #         mean = cv.mean(img, currentMask)
+    #         resLocal[y, x] = mean[0]
 
     #
     # cv.imshow("mask", mask)

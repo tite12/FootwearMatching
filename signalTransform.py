@@ -121,13 +121,14 @@ def calculateFourierMellin(img) :
 
     return imgLogPolarComplexMags
 
-def eliminateNoise(img, noise) :
-    noiseHeight, noiseWidth = noise.shape
+def eliminateNoise(img, x, y, windowSize =20) :
+    noiseHeight = windowSize
+    noiseWidth = windowSize
     if noiseWidth % 2 == 1 :
         noiseWidth =  noiseWidth - 1
     if noiseHeight % 2 == 1 :
         noiseHeight = noiseHeight - 1
-    noiseFM = calculateFourierMellin(noise[0:noiseHeight, 0:noiseWidth])
+    noiseFM = calculateFourierMellin(img[y:y + noiseHeight, x:x + noiseWidth])
     noiseWidth = noiseWidth / 2
     noiseHeight = noiseHeight / 2
     noiseMean = np.mean(noiseFM)
@@ -190,7 +191,7 @@ def threeLayeredLearning(images, masks) :
     # getGlobalFeatures()
     return descriptors
 
-def getDominantDescriptors(img, mask, windowWidth = 10, windowHeight = 10, th = 1.4) :
+def getDominantDescriptors(img, mask, windowWidth = 5, windowHeight = 5, th = 1.4) :
     rep = cv.copyMakeBorder(img, windowHeight, windowHeight, windowWidth, windowWidth, cv.BORDER_REFLECT101)
     height, width = img.shape
 
@@ -211,8 +212,10 @@ def getDominantDescriptors(img, mask, windowWidth = 10, windowHeight = 10, th = 
 
     similarDescriptors = {}
     count = 0
+    print (len(fmDescriptors))
     for currentPatch in fmDescriptors:
         similarFound = False
+        print count
         if count > 7000 :
             break
         print count
@@ -236,7 +239,7 @@ def getDominantDescriptors(img, mask, windowWidth = 10, windowHeight = 10, th = 
 
     return dominantDescriptors
 
-def getDiscriminativeFeatures(features, th = 1.39) :
+def getDiscriminativeFeatures(features, th = 1.4) :
     discriminativeFeatures = features[0]
     i = 1
     while i < len(features) :
@@ -244,6 +247,7 @@ def getDiscriminativeFeatures(features, th = 1.39) :
         patches = features[i]
         intersection = []
         for feature in discriminativeFeatures:
+            print("sorting")
             for patch in patches:
                 corr = correlation(feature, patch)
                 # print corr
