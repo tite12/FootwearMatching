@@ -117,42 +117,6 @@ def regionBasedNonLocalMeans(img, noiseMask, mod) :
 
     res = np.zeros(diffImg.shape, np.uint8)
 
-    # diffImg = np.uint8(util.normalize(diffImg, 255))
-    # diffImg = histogramOperations.equalizeHistogram(diffImg)
-    # height, width = diffImg.shape
-    # res = np.zeros(img.shape, np.uint8)
-    # min, max, minLoc, maxLoc = cv.minMaxLoc(diffImg)
-    # thresholds = []
-    # masks = []
-    # mapping = np.zeros(diffImg.shape, np.uint8)
-    # classes = 25
-    # maskSize = {}
-    # maskSize[0] = 0
-    # for i in range(1, classes + 1) :
-    #     thresholds.append(calcTh(i, min, max, classes))
-    #     masks.append(np.zeros(img.shape, np.uint8))
-    #     if i < classes :
-    #         maskSize[i] = 0
-    #
-    # for x in range(width):
-    #     for y in range(height):
-    #         if noiseMask[y, x] == 1 :
-    #             currentVal = diffImg[y, x]
-    #             index = 0
-    #             for th in thresholds :
-    #
-    #                 if index == 0 and currentVal < th:
-    #                     setPixel(masks[index], x, y, 255, 1)
-    #                     mapping[y, x] = index
-    #                     maskSize[index] = maskSize[index] + 1
-    #                     break
-    #
-    #                 if index > 0 and currentVal > thresholds[index-1] and currentVal <= th  :
-    #                     setPixel(masks[index], x, y, 255, 1)
-    #                     mapping[y, x] = index
-    #                     maskSize[index] = maskSize[index] + 1
-    #                     break
-    #                 index += 1
     classes = 25
     maskSize, masks, mapping = fillClasses(diffImg, noiseMask, classes)
 
@@ -615,4 +579,22 @@ def filterMask(mask, window = 2, th = 3) :
     # kernel = np.ones((2,2),np.uint8)
     # result = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
     # result = cv.morphologyEx(result, cv.MORPH_CLOSE, kernel)
+    return result
+
+def eliminateLineNoise(edges, th = 15 ) :
+    # The first cell is the number of labels
+    # The second cell is the label matrix
+    # The third cell is the stat matrix
+    # The fourth cell is the centroid matrix
+    numLabels, labels, stats, _ = cv.connectedComponentsWithStats(edges, connectivity=8)
+    size = stats[1:, -1]
+    result = np.zeros(edges.shape, np.uint8)
+    for e in range(0, numLabels - 1):
+        if size[e] >= th:
+            th_up = e + 1
+            th_do = th_up
+
+            # masking to keep only the components which meet the condition
+            mask = cv.inRange(labels, th_do, th_up)
+            result = result + mask
     return result

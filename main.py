@@ -17,12 +17,13 @@ import signalTransform
 firstVersionPreprocessing = False
 LBPdenoising = False
 LBPLearning = False
-mainPipeline = True
+mainPipeline = False
 SIFTdescriptor = False
 HOGdescriptor = False
 lbpImg = np.empty((0, 0))
-signal = True
+signal = False
 signalLearning = False
+edgeDetection = True
 
 
 def click_and_show(event, x, y, flags, param) :
@@ -204,14 +205,15 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066_filtered.jpg', 0)
+imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 # en = enhancement.fastSMQT(img)
-roi = cv.selectROI("Select noise area", img)
+# roi = cv.selectROI("Select noise area", img)
 #
 # # cv.destroyAllWindows()
-noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+# noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-# noiseImg = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204_corr.jpg', 0)
+noiseImg = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066_noise.jpg', 0)
 mask = np.ones(img.shape, np.uint8)
 
 if signal:
@@ -224,9 +226,6 @@ if signal:
     morph = cv.morphologyEx(th, cv.MORPH_OPEN, kernel)
     morph = cv.morphologyEx(morph, cv.MORPH_CLOSE, kernel)
     mask = util.normalize(morph, 1)
-    # diffTh = np.float32(img) - np.float32(th)
-    # diffTh[diffTh > 255] = 255
-    # diffTh[diffTh < 0] = 0
 
     # img = np.uint8(diffTh)
     # cv.imshow("mask", mask)
@@ -242,41 +241,43 @@ if mainPipeline :
     # smqt = filters.regionBasedNonLocalMeans(img, 1 - mask, False)
     img = filters.regionBasedNonLocalMeans(img, 1 - mask, False)
 
-    # med = np.median(img)
-    # img[img < med] = np.nan
-    # mean = np.nanmean(img)
-    # img[img < mean] = 0
-    # img[img == np.nan] = 0
     img = np.uint8(util.normalize(img, 255))
     otsu = doThresholding.otsuThreshold(img)
 
-    # img[img >= 10] = 255
-    # smqt = np.uint8(util.normalize(smqt, 255))
-    # smqt[smqt >= 20] = 255
-    # cv.imshow("smqt", histogramOperations.equalizeHistogram(smqt))
     img[img == 0] = 255
     cv.imshow("img", histogramOperations.equalizeHistogram(img))
     cv.imshow("otsu", otsu)
     cv.waitKey(0)
-    # nonLocalMeans = filters.regionBasedNonLocalMeans(img, noiseImg, np.zeros((0, 0)))
-    # nonLocalMeans = filters.regionBasedNonLocalMeans(img, noiseImg, True)
 
-    # cv.imshow("non-local mean", nonLocalMeans)
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()
-    #
-    # equal = histogramOperations.equalizeHistogram(nonLocalMeans)
-    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241_filtered.jpg', img)
-    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241_noise.jpg', (1 - mask) * 255)
-    #
-    # cv.imshow("equalized non-local mean", equal)
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()
-    # #
-    # normal = LBP.classify(img.copy(), 9, 24, 8, False)
-    # ptp = LBP.classify(img.copy(), 9, 24, 8, True)
-    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_lbp.jpg', normal)
-    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00233_gt_ptp.jpg', ptp)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/moderate/00178_filtered.jpg', img)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/moderate/00178_noise.jpg', (1 - mask) * 255)
+
+if edgeDetection:
+    noiseImg = doThresholding.otsuThreshold(noiseImg) / 255
+    kernel = np.ones((1, 1), np.uint8)
+    noiseImg = cv.erode(noiseImg, kernel)
+
+    edges = doThresholding.canny(img, noiseImg)
+    kernel = np.ones((5, 5), np.uint8)
+    noiseImg = cv.erode(noiseImg, kernel)
+    hnEdges = doThresholding.holisticallyNestedEdgeDetection(img, noiseImg, True)
+
+    imgGT = doThresholding.otsuThreshold(imgGT)
+    hnEdgesGT = doThresholding.holisticallyNestedEdgeDetection(imgGT, np.ones(imgGT.shape))
+    hnEdgesGT = np.uint8(hnEdgesGT * 255)
+    edgesGT = doThresholding.canny(hnEdgesGT, np.ones(imgGT.shape))
+
+
+    edges = filters.eliminateLineNoise(np.uint8(edges), 20)
+    edgesGT = filters.eliminateLineNoise(np.uint8(edgesGT))
+
+    cv.imshow("orig", img)
+    cv.imshow("edges", edges)
+    cv.imshow("gt", edgesGT)
+    cv.imshow("HN edges", hnEdges)
+    cv.imshow("HN gt", hnEdgesGT)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 if LBPdenoising :
     # enh = enhancement.fastSMQT(img)
