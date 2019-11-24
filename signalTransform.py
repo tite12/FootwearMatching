@@ -170,6 +170,8 @@ def correlation(img, noise) :
     denominator = np.sum(denominator)
     denominator = math.sqrt(denominator)
     corr = numerator / denominator
+    if denominator == 0 or corr == np.nan:
+        corr = 0
     return corr
 
 def threeLayeredLearning(images, masks) :

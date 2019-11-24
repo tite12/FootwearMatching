@@ -95,7 +95,7 @@ def nonLocalGrouping(img) :
             diffImg[y, x] = abs(eigVal1 - eigVal2)
     return diffImg
 
-def regionBasedNonLocalMeans(img, noiseMask, mod) :
+def regionBasedNonLocalMeans(img, noiseMask, noiseImg, mod) :
     diffImg = nonLocalGrouping(img)
     cv.imshow("before", histogramOperations.equalizeHistogram(np.uint8(util.normalize(diffImg, 255))))
     diffImg = diffImg * noiseMask
@@ -163,10 +163,16 @@ def regionBasedNonLocalMeans(img, noiseMask, mod) :
             break
 
     height, width = img.shape
+    results = []
+    for i in range(0, classes) :
+        results.append(np.zeros((height, width)))
+
+
     for x in range(width):
         for y in range(height):
             if noiseMask[y, x] == 1 :
                 res[y,x] = majorMeans[mapping[y, x]]
+                results[mapping[y, x]][y, x] = diffImg[y, x]
     # resLocal = np.zeros(res.shape, np.uint8)
     # n = 30
     # for x in range(width):
@@ -211,7 +217,7 @@ def regionBasedNonLocalMeans(img, noiseMask, mod) :
     # cv.waitKey(0)
     # cv.destroyAllWindows()
 
-    return res
+    return res, results
 
 def fillClasses(diffImg, noiseMask, classes) :
     height, width = diffImg.shape

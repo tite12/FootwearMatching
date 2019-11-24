@@ -17,13 +17,13 @@ import signalTransform
 firstVersionPreprocessing = False
 LBPdenoising = False
 LBPLearning = False
-mainPipeline = False
+mainPipeline = True
 SIFTdescriptor = False
 HOGdescriptor = False
 lbpImg = np.empty((0, 0))
-signal = False
+signal = True
 signalLearning = False
-edgeDetection = True
+edgeDetection = False
 
 
 def click_and_show(event, x, y, flags, param) :
@@ -205,16 +205,16 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066_filtered.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009.jpg', 0)
 imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 # en = enhancement.fastSMQT(img)
-# roi = cv.selectROI("Select noise area", img)
+roi = cv.selectROI("Select noise area", img)
 #
 # # cv.destroyAllWindows()
-# noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-noiseImg = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066_noise.jpg', 0)
-mask = np.ones(img.shape, np.uint8)
+# noiseImg = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00025_noise.jpg', 0)
+mask = np.zeros(img.shape, np.uint8)
 
 if signal:
     corr = signalTransform.eliminateNoise(img, roi[0], roi[1], 6 )
@@ -239,7 +239,36 @@ if mainPipeline :
     # img = filters.nonLocalGrouping(img, noiseImg)
 
     # smqt = filters.regionBasedNonLocalMeans(img, 1 - mask, False)
-    img = filters.regionBasedNonLocalMeans(img, 1 - mask, False)
+    img, classes = filters.regionBasedNonLocalMeans(img, 1 - mask, noiseImg, False)
+
+    biggestClassIndex = 0
+    biggestClassCount = 0
+    i = 0
+    for currentClass in classes:
+        currentClass[currentClass > 0] = 1
+        # cv.imshow("class", currentClass)
+        # cv.waitKey(0)
+        sum = np.sum(currentClass)
+        if sum > biggestClassCount :
+            biggestClassIndex = i
+            biggestClassCount = sum
+        i = i + 1
+    result = np.zeros(img.shape)
+    i = 0
+    for currentClass in classes:
+        if i == biggestClassIndex :
+            i = i + 1
+            continue
+        result = result + currentClass
+        i = i + 1
+    result[result > 0] = 255
+    cv.imshow("res", np.uint8(result))
+    cv.waitKey(0)
+        # corr = signalTransform.eliminateNoise(currentClass, roi[0], roi[1], 4, False)
+        # corr = np.uint8(util.normalize(corr, 255))
+        # corr = histogramOperations.equalizeHistogram(corr)
+        # cv.imshow("corr", corr)
+        # cv.waitKey(0)
 
     img = np.uint8(util.normalize(img, 255))
     otsu = doThresholding.otsuThreshold(img)
