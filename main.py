@@ -205,15 +205,15 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009.jpg', 0)
-imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
-# en = enhancement.fastSMQT(img)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00241.jpg', 0)
+# imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
+
 roi = cv.selectROI("Select noise area", img)
-#
-# # cv.destroyAllWindows()
+
 noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-# noiseImg = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00025_noise.jpg', 0)
+# mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00182_noise.jpg', 0)
+# mask = doThresholding.otsuThreshold(mask) / 255
 mask = np.zeros(img.shape, np.uint8)
 
 if signal:
@@ -228,27 +228,22 @@ if signal:
     mask = util.normalize(morph, 1)
 
     # img = np.uint8(diffTh)
-    # cv.imshow("mask", mask)
-    # cv.imshow("th", th)
-    # cv.waitKey(0)
+    cv.imshow("mask", mask)
+    cv.imshow("th", th)
+    cv.waitKey(0)
 
 if mainPipeline :
-    # img = filters.eliminateNoise(img, noiseImg, 0.1)
-    # smqt = enhancement.fastSMQT(img)
-    # smqt = filters.nonLocalGrouping(img, noiseImg)
-    # img = filters.nonLocalGrouping(img, noiseImg)
-
-    # smqt = filters.regionBasedNonLocalMeans(img, 1 - mask, False)
-    img, classes = filters.regionBasedNonLocalMeans(img, 1 - mask, noiseImg, False)
+    img, classes = filters.regionBasedNonLocalMeans(img)
 
     biggestClassIndex = 0
     biggestClassCount = 0
     i = 0
     for currentClass in classes:
-        currentClass[currentClass > 0] = 1
-        # cv.imshow("class", currentClass)
+        currentSum = currentClass
+        currentSum[currentClass > 0] = 1
+        # cv.imshow("class", np.uint8(util.normalize(currentClass, 255)))
         # cv.waitKey(0)
-        sum = np.sum(currentClass)
+        sum = np.sum(currentSum)
         if sum > biggestClassCount :
             biggestClassIndex = i
             biggestClassCount = sum
@@ -261,25 +256,25 @@ if mainPipeline :
             continue
         result = result + currentClass
         i = i + 1
-    result[result > 0] = 255
-    cv.imshow("res", np.uint8(result))
+    adaptive = doThresholding.adaptiveThreshold(np.uint8(util.normalize(result, 255)))
+    result[result > 0] = 1
+    adaptive = adaptive * result
+    adaptive = np.uint8(adaptive)
+
+    adaptive = adaptive * (1 - mask)
+
+    morph = filters.eliminateLineNoise(np.uint8(adaptive))
+    morph = filters.eliminateLineNoise(255 - morph)
+
+
+    cv.imshow("img", img)
+    cv.imshow("res", adaptive)
+    cv.imshow("morph", morph)
     cv.waitKey(0)
-        # corr = signalTransform.eliminateNoise(currentClass, roi[0], roi[1], 4, False)
-        # corr = np.uint8(util.normalize(corr, 255))
-        # corr = histogramOperations.equalizeHistogram(corr)
-        # cv.imshow("corr", corr)
-        # cv.waitKey(0)
 
-    img = np.uint8(util.normalize(img, 255))
-    otsu = doThresholding.otsuThreshold(img)
-
-    img[img == 0] = 255
-    cv.imshow("img", histogramOperations.equalizeHistogram(img))
-    cv.imshow("otsu", otsu)
-    cv.waitKey(0)
-
-    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/moderate/00178_filtered.jpg', img)
-    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/moderate/00178_noise.jpg', (1 - mask) * 255)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00241.jpg', adaptive)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00241_filtered.jpg', morph)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00241_noise.jpg', mask * 255)
 
 if edgeDetection:
     noiseImg = doThresholding.otsuThreshold(noiseImg) / 255

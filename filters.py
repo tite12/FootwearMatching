@@ -95,13 +95,8 @@ def nonLocalGrouping(img) :
             diffImg[y, x] = abs(eigVal1 - eigVal2)
     return diffImg
 
-def regionBasedNonLocalMeans(img, noiseMask, noiseImg, mod) :
+def regionBasedNonLocalMeans(img, mod = False) :
     diffImg = nonLocalGrouping(img)
-    cv.imshow("before", histogramOperations.equalizeHistogram(np.uint8(util.normalize(diffImg, 255))))
-    diffImg = diffImg * noiseMask
-    # diffImg = enhancement.fastSMQT(diffImg)
-    cv.imshow("masked", histogramOperations.equalizeHistogram(np.uint8(util.normalize(diffImg, 255))))
-
     if mod :
         tmp = diffImg
         tmp[tmp == 0] = np.nan
@@ -118,12 +113,13 @@ def regionBasedNonLocalMeans(img, noiseMask, noiseImg, mod) :
     res = np.zeros(diffImg.shape, np.uint8)
 
     classes = 25
-    maskSize, masks, mapping = fillClasses(diffImg, noiseMask, classes)
+    maskSize, masks, mapping = fillClasses(diffImg, classes)
 
     sortedMaskSize = sorted(maskSize.items(), key=operator.itemgetter(1))
 
-    dataPixels = np.sum(noiseMask)
-    dataPixels = dataPixels * 0.7
+    height, width = img.shape
+    dataPixels = height * width
+    dataPixels = dataPixels * 0.6
 
     print("recalculate?")
     print(int(sortedMaskSize[-1][1]))
@@ -131,7 +127,7 @@ def regionBasedNonLocalMeans(img, noiseMask, noiseImg, mod) :
     if sortedMaskSize[-1][1] > dataPixels :
         diffImg = np.uint8(util.normalize(diffImg, 255))
         diffImg = histogramOperations.equalizeHistogram(diffImg)
-        maskSize, masks, mapping = fillClasses(diffImg, noiseMask, classes)
+        maskSize, masks, mapping = fillClasses(diffImg, classes)
         sortedMaskSize = sorted(maskSize.items(), key=operator.itemgetter(1))
         print("I was here")
 
@@ -140,20 +136,10 @@ def regionBasedNonLocalMeans(img, noiseMask, noiseImg, mod) :
     print("Threshold")
     print(dataPixels)
 
-
-
     for maskImg in masks :
         mean = cv.mean(img, maskImg)
         means.append(mean[0])
         majorMeans.append(0)
-        # sum = np.sum(maskImg / 255)
-        # print sum
-        # if sum > dataPixels:
-        #     means.append(mean[0])
-        # else :
-        #     means.append(0)
-        # cv.imshow("maskImg", maskImg)
-        # cv.waitKey(0)
 
     pixels = 0
     for m in (sortedMaskSize) :
@@ -162,17 +148,14 @@ def regionBasedNonLocalMeans(img, noiseMask, noiseImg, mod) :
         if pixels > dataPixels :
             break
 
-    height, width = img.shape
     results = []
     for i in range(0, classes) :
         results.append(np.zeros((height, width)))
 
-
     for x in range(width):
         for y in range(height):
-            if noiseMask[y, x] == 1 :
-                res[y,x] = majorMeans[mapping[y, x]]
-                results[mapping[y, x]][y, x] = diffImg[y, x]
+             res[y,x] = majorMeans[mapping[y, x]]
+             results[mapping[y, x]][y, x] = diffImg[y, x]
     # resLocal = np.zeros(res.shape, np.uint8)
     # n = 30
     # for x in range(width):
@@ -219,7 +202,7 @@ def regionBasedNonLocalMeans(img, noiseMask, noiseImg, mod) :
 
     return res, results
 
-def fillClasses(diffImg, noiseMask, classes) :
+def fillClasses(diffImg, classes) :
     height, width = diffImg.shape
     min, max, minLoc, maxLoc = cv.minMaxLoc(diffImg)
     thresholds = []
@@ -236,23 +219,22 @@ def fillClasses(diffImg, noiseMask, classes) :
 
     for x in range(width):
         for y in range(height):
-            if noiseMask[y, x] == 1 :
-                currentVal = diffImg[y, x]
-                index = 0
-                for th in thresholds :
+            currentVal = diffImg[y, x]
+            index = 0
+            for th in thresholds :
 
-                    if index == 0 and currentVal < th:
-                        setPixel(masks[index], x, y, 255, 1)
-                        mapping[y, x] = index
-                        maskSize[index] = maskSize[index] + 1
-                        break
+                if index == 0 and currentVal < th:
+                    setPixel(masks[index], x, y, 255, 1)
+                    mapping[y, x] = index
+                    maskSize[index] = maskSize[index] + 1
+                    break
 
-                    if index > 0 and currentVal > thresholds[index-1] and currentVal <= th  :
-                        setPixel(masks[index], x, y, 255, 1)
-                        mapping[y, x] = index
-                        maskSize[index] = maskSize[index] + 1
-                        break
-                    index += 1
+                if index > 0 and currentVal > thresholds[index-1] and currentVal <= th  :
+                    setPixel(masks[index], x, y, 255, 1)
+                    mapping[y, x] = index
+                    maskSize[index] = maskSize[index] + 1
+                    break
+                index += 1
 
     return maskSize, masks, mapping
 
@@ -602,5 +584,8 @@ def eliminateLineNoise(edges, th = 15 ) :
 
             # masking to keep only the components which meet the condition
             mask = cv.inRange(labels, th_do, th_up)
+
+            # cv.imshow("mask", mask)
+            # cv.waitKey(0)
             result = result + mask
     return result
