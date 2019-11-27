@@ -15,7 +15,7 @@ import pixelDescriptor
 import signalTransform
 
 firstVersionPreprocessing = False
-LBPdenoising = True
+LBPdenoising = False
 LBPLearning = False
 mainPipeline = False
 SIFTdescriptor = False
@@ -24,6 +24,7 @@ lbpImg = np.empty((0, 0))
 signal = False
 signalLearning = False
 edgeDetection = False
+processFiltered = True
 
 
 def click_and_show(event, x, y, flags, param) :
@@ -206,16 +207,47 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00066.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00021_filtered.jpg', 0)
 # imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 
-roi = cv.selectROI("Select noise area", img)
+# roi = cv.selectROI("Select noise area", img)
 
-noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+# noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
 # mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00009_noise.jpg', 0)
 # mask = doThresholding.otsuThreshold(mask) / 255
 mask = np.zeros(img.shape, np.uint8)
+
+if processFiltered :
+    img = doThresholding.otsuThreshold(img)
+
+    # img = doThresholding.calculateSkeleton(img)
+    # cv.imshow("rees", img)
+    # cv.waitKey(0)
+
+    im2, contours, hierachy = cv.findContours(img, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_NONE )
+
+    closedContours = np.zeros(img.shape, np.uint8)
+    openContours = np.zeros(img.shape, np.uint8)
+
+    hierachy = hierachy[0]
+    for i in range(0, len(contours)):
+        if hierachy[i][2] < 0:
+            for contour in contours[i]:
+                for point in contour:
+                    openContours[point[1], point[0]] = 255
+        else :
+            for contour in contours[i] :
+                for point in contour:
+                    closedContours[point[1], point[0]] = 255
+
+    im2 = closedContours + openContours
+    openContours = filters.eliminateLineNoise(openContours, 100)
+    cv.imshow("rees", closedContours + openContours)
+    cv.imshow("orig",im2)
+    cv.waitKey(0)
+
+
 
 if signal:
     corr = signalTransform.eliminateNoise(img, roi[0], roi[1], 6 )
