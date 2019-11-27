@@ -124,12 +124,14 @@ def regionBasedNonLocalMeans(img, mod = False) :
     print("recalculate?")
     print(int(sortedMaskSize[-1][1]))
     print dataPixels
+    equalized = False
     if sortedMaskSize[-1][1] > dataPixels :
         diffImg = np.uint8(util.normalize(diffImg, 255))
         diffImg = histogramOperations.equalizeHistogram(diffImg)
         maskSize, masks, mapping = fillClasses(diffImg, classes)
         sortedMaskSize = sorted(maskSize.items(), key=operator.itemgetter(1))
         print("I was here")
+        equalized = True
 
     means = []
     majorMeans = []
@@ -200,7 +202,7 @@ def regionBasedNonLocalMeans(img, mod = False) :
     # cv.waitKey(0)
     # cv.destroyAllWindows()
 
-    return res, results
+    return res, results, equalized
 
 def fillClasses(diffImg, classes) :
     height, width = diffImg.shape
