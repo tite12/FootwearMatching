@@ -571,7 +571,8 @@ def filterMask(mask, window = 2, th = 3) :
     # result = cv.morphologyEx(result, cv.MORPH_CLOSE, kernel)
     return result
 
-def eliminateLineNoise(edges, th = 15 ) :
+#if average is true, th is a percent
+def eliminateLineNoise(edges, th = 15, average = False ) :
     # The first cell is the number of labels
     # The second cell is the label matrix
     # The third cell is the stat matrix
@@ -579,15 +580,25 @@ def eliminateLineNoise(edges, th = 15 ) :
     numLabels, labels, stats, _ = cv.connectedComponentsWithStats(edges, connectivity=8)
     size = stats[1:, -1]
     result = np.zeros(edges.shape, np.uint8)
+    if average:
+        avg = np.mean(size)
+        th = avg * th
+    print th
+    print("===============")
     for e in range(0, numLabels - 1):
-        if size[e] >= th:
-            th_up = e + 1
-            th_do = th_up
+        th_up = e + 1
+        th_do = th_up
 
-            # masking to keep only the components which meet the condition
-            mask = cv.inRange(labels, th_do, th_up)
+        # masking to keep only the components which meet the condition
+        mask = cv.inRange(labels, th_do, th_up)
+        if average:
+            print(size[e])
+            if size[e] > th:
+                result = result + mask
+        else :
+            if size[e] >= th:
 
-            # cv.imshow("mask", mask)
-            # cv.waitKey(0)
-            result = result + mask
+                # cv.imshow("mask", mask)
+                # cv.waitKey(0)
+                result = result + mask
     return result

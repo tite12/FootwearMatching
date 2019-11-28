@@ -207,7 +207,7 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00021_filtered.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00066_filtered.jpg', 0)
 # imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 
 # roi = cv.selectROI("Select noise area", img)
@@ -220,31 +220,57 @@ mask = np.zeros(img.shape, np.uint8)
 
 if processFiltered :
     img = doThresholding.otsuThreshold(img)
-
-    # img = doThresholding.calculateSkeleton(img)
+    # kernel = np.ones((2, 2), np.uint8)
+    # img = cv.dilate(img, kernel)
+    # # img = doThresholding.calculateSkeleton(img)
     # cv.imshow("rees", img)
     # cv.waitKey(0)
 
-    im2, contours, hierachy = cv.findContours(img, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_NONE )
+    im2, contours, hierachy = cv.findContours(255-img, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_NONE )
 
-    closedContours = np.zeros(img.shape, np.uint8)
-    openContours = np.zeros(img.shape, np.uint8)
-
+    closedContoursImg = np.zeros(img.shape, np.uint8)
+    openContoursImg = np.zeros(img.shape, np.uint8)
+    openContours = []
+    closedContours = []
+    approxImgOpen = np.zeros(img.shape)
+    approxImgClosed = np.zeros(img.shape)
     hierachy = hierachy[0]
     for i in range(0, len(contours)):
         if hierachy[i][2] < 0:
+            openContours.append(contours[i])
+            epsilon = 0.03 * cv.arcLength(contours[i], True)
+            approx = cv.approxPolyDP(contours[i], epsilon, False)
+
+            # cv.drawContours(approxImgOpen, contours[i], -1, 255, 1)
+            cv.drawContours(approxImgOpen, [approx], -1, 255, 1)
             for contour in contours[i]:
                 for point in contour:
-                    openContours[point[1], point[0]] = 255
+                    openContoursImg[point[1], point[0]] = 255
         else :
+            closedContours.append(contours[i])
+            epsilon = 0.03 * cv.arcLength( contours[i], True)
+            approx = cv.approxPolyDP( contours[i], epsilon, False)
+
+            # cv.drawContours(approxImgClosed,  contours[i], -1, 255, 1)
+            cv.drawContours(approxImgClosed, [approx], -1, 255, 1)
             for contour in contours[i] :
                 for point in contour:
-                    closedContours[point[1], point[0]] = 255
+                    closedContoursImg[point[1], point[0]] = 255
 
-    im2 = closedContours + openContours
-    openContours = filters.eliminateLineNoise(openContours, 100)
-    cv.imshow("rees", closedContours + openContours)
+
+
+
+    im2 = closedContoursImg + openContoursImg
+    # openContoursImg = filters.eliminateLineNoise(openContoursImg, 100)
+    # closedContoursImg = filters.eliminateLineNoise(closedContoursImg, 0.9, True)
+    cv.imshow("rees", closedContoursImg + openContoursImg)
     cv.imshow("orig",im2)
+    cv.imshow("img", img)
+    cv.imshow("open", openContoursImg)
+    cv.imshow("close", closedContoursImg)
+    cv.imshow("approx open", approxImgOpen)
+    cv.imshow("approx closed", approxImgClosed)
+    cv.imshow("approx added", approxImgClosed + approxImgOpen)
     cv.waitKey(0)
 
 
