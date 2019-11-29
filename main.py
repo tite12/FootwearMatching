@@ -4,6 +4,8 @@ import numpy as np
 import cv2 as cv
 from numpy import result_type
 from matplotlib import pyplot as plt
+import glob
+import operator
 
 import doThresholding
 import histogramOperations
@@ -13,6 +15,7 @@ import enhancement
 import LBP
 import pixelDescriptor
 import signalTransform
+
 
 firstVersionPreprocessing = False
 LBPdenoising = False
@@ -24,7 +27,8 @@ lbpImg = np.empty((0, 0))
 signal = False
 signalLearning = False
 edgeDetection = False
-processFiltered = True
+processFiltered = False
+matchFiles = True
 
 
 def click_and_show(event, x, y, flags, param) :
@@ -110,7 +114,6 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         # descriptors = pixelDescriptor.threeLayeredLearning(images, masks, False)
         descriptors = np.loadtxt('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_SIFT.txt', delimiter=',')
         descriptors = np.float32(np.asarray(descriptors))
-        sift = cv.xfeatures2d.SIFT_create()
         img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/hard/00174.jpg', 0)
         height, width = img.shape
         kp = []
@@ -207,7 +210,7 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00066_filtered.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00250_filtered.jpg', 0)
 # imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 
 # roi = cv.selectROI("Select noise area", img)
@@ -217,6 +220,63 @@ img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/t
 # mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00009_noise.jpg', 0)
 # mask = doThresholding.otsuThreshold(mask) / 255
 mask = np.zeros(img.shape, np.uint8)
+
+if matchFiles :
+    img = doThresholding.otsuThreshold(img)
+
+    sift = cv.xfeatures2d.SIFT_create()
+    FLANN_INDEX_LSH = 6
+    index_params = dict(algorithm=FLANN_INDEX_LSH,
+                        table_number=6,  # 12
+                        key_size=12,  # 20
+                        multi_probe_level=1)  # 2
+    search_params = dict(checks=50)  # or pass empty dictionary
+    flann = cv.FlannBasedMatcher(index_params, search_params)
+
+    kp1, des1 = sift.detectAndCompute(img, None)
+
+    des1 = np.uint8(des1)
+
+    files = []
+    path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
+    files = glob.glob(path)
+    matchesDict = {}
+    for file in files :
+        print("2")
+        gt = cv.imread(file, 0)
+
+        kp2, des2 = sift.detectAndCompute(gt, None)
+        des2 = np.uint8(des2)
+        # matches = flann.knnMatch(des1, des2, k=2)
+        matches = flann.
+        matchesMask = [[0, 0] for i in range(len(matches))]
+
+        good = 0
+        for i, (m, n) in enumerate(matches):
+            if m.distance < 0.95 * n.distance:
+                good += 1
+                matchesMask[i] = [1, 0]
+
+        matchesDict[file] = good
+
+        draw_params = dict(matchColor=(0, 255, 0),
+                           singlePointColor=(255, 0, 0),
+                           matchesMask=matchesMask,
+                           flags=cv.DrawMatchesFlags_DEFAULT)
+        # img3 = cv.drawMatchesKnn(img, kp1, gt, kp2, matches, None, **draw_params)
+        # cv.imshow("matches", img3)
+        # cv.waitKey(0)
+        # cv.destroyAllWindows()
+        # print("1")
+
+    sortedMatches = sorted(matchesDict.items(), key=operator.itemgetter(1))
+
+    for match in  sortedMatches :
+        print(match[0])
+        print(match[1])
+        print(";;;;;;;;;;;;;;;;;;;;")
+
+
 
 if processFiltered :
     img = doThresholding.otsuThreshold(img)
