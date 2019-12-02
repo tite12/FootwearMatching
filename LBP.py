@@ -30,7 +30,7 @@ def basicLBP(img, points, radius) :
 
     return hist
 
-def getLBPImage(img, window, points, radius, usePtP = False) :
+def getlbpimage(img, window, points, radius, usePtP = False) :
     if usePtP:
         img = pixelToPatch(img, radius)
         points = min(8, points)

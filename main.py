@@ -31,8 +31,9 @@ processFiltered = False
 siftMatchFiles = False
 denseSiftMatchFiles = False
 surfMatchFiles = False
-denseSurfMatchFiles = True
+denseSurfMatchFiles = False
 signalMatchFiles = False
+lbpMatchFiles = True
 
 def click_and_show(event, x, y, flags, param) :
     global lbpImg
@@ -130,7 +131,7 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         des = des[1]
 
         bf = cv.BFMatcher()
-        matches = bf.knnMatch(des,descriptors,k=1)
+        matches = bf.knnMatch(des,descriptors,k=100)
         keypoints2 = []
         results = np.zeros(img.shape, np.float32)
         for match in matches :
@@ -213,34 +214,136 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/00232_extracted_without_mask.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/00009_filtered.jpg', 0)
 # imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 
 # roi = cv.selectROI("Select noise area", img)
 
 # noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-# mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00204_noise.jpg', 0)
-# mask = doThresholding.otsuThreshold(mask) / 255
-mask = np.zeros(img.shape, np.uint8)
+mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00009_noise.jpg', 0)
+mask = doThresholding.otsuThreshold(mask) / 255
+# mask = np.zeros(img.shape, np.uint8)
 
-if signalMatchFiles :
+if lbpMatchFiles :
+    print("LBP match files")
+    window = 5
+
+    bf = cv.BFMatcher()
+
     img = doThresholding.otsuThreshold(img)
-    img = signalTransform.calculateFourierMellin(img)
 
     height, width = img.shape
+
+    des1 = []
+    for x in range(window, width - window, 4):
+        xInd = x + window
+        for y in range(window, height - window, 4):
+            if mask[y, x] == 1 :
+                continue
+            yInd = y + window
+            currentPatch = img[yInd - window:yInd + window, xInd - window:xInd + window]
+            imgLBP = LBP.basicLBP(currentPatch, 36, window)
+            des1.append(np.float32(imgLBP.reshape((-1, 1))))
 
     path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
     files = glob.glob(path)
     matchesDict = {}
     for file in files:
+        print(file)
         gt = cv.imread(file, 0)
         gt = cv.resize(gt, (width, height))
         gt = doThresholding.otsuThreshold(gt)
-        gt = signalTransform.calculateFourierMellin(gt)
 
-        corr = signalTransform.correlation(img, gt)
-        matchesDict[file] = corr
+        height, width = gt.shape
+
+        des2 = []
+        for x in range(window, width - window, 4):
+            xInd = x + window
+            for y in range(window, height - window, 4):
+                yInd = y + window
+                currentPatch = gt[yInd - window:yInd + window, xInd - window:xInd + window]
+                gtLBP = LBP.basicLBP(currentPatch, 36, window)
+                des2.append(np.float32(gtLBP.reshape((-1, 1))))
+
+        matches = bf.knnMatch(np.asarray(des1), np.asarray(des2), k=2)
+
+        matchesMask = [[0, 0] for i in range(len(matches))]
+
+        good = 0
+        for m, n in matches:
+            if m.distance < 0.8 * n.distance:
+                good += 1
+                matchesMask[i] = [1, 0]
+
+        matchesDict[file] = good
+
+    sortedMatches = sorted(matchesDict.items(), key=operator.itemgetter(1))
+
+    for match in sortedMatches:
+        print(match[0])
+        print(match[1])
+        print(";;;;;;;;;;;;;;;;;;;;")
+
+
+if signalMatchFiles :
+    print("Signal match files")
+    window = 5
+
+    bf = cv.BFMatcher()
+
+    img = doThresholding.otsuThreshold(img)
+
+    height, width = img.shape
+    img = cv.copyMakeBorder(img, window, window, window, window, cv.BORDER_REFLECT101)
+
+    des1 = []
+    for x in range(0, width, 4):
+        xInd = x + window
+        for y in range(0, height, 4):
+            if mask[y, x] == 1 :
+                continue
+            yInd = y + window
+            currentPatch = img[yInd - window:yInd + window, xInd - window:xInd + window]
+            imgFM = signalTransform.calculateFourierMellin(currentPatch)
+            des1.append(imgFM.reshape((-1, 1)))
+
+    path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
+    files = glob.glob(path)
+    matchesDict = {}
+    for file in files:
+        print(file)
+        gt = cv.imread(file, 0)
+        gt = cv.resize(gt, (width, height))
+        gt = doThresholding.otsuThreshold(gt)
+
+        height, width = gt.shape
+        gt = cv.copyMakeBorder(gt, window, window, window, window, cv.BORDER_REFLECT101)
+
+        des2 = []
+        for x in range(0, width, 4):
+            xInd = x + window
+            for y in range(0, height, 4):
+                yInd = y + window
+                currentPatch = gt[yInd - window:yInd + window, xInd - window:xInd + window]
+                gtFM = signalTransform.calculateFourierMellin(currentPatch)
+                des2.append(gtFM.reshape((-1, 1)))
+
+        # corr = signalTransform.correlation(img, gt)
+        # matchesDict[file] = corr
+        matches = bf.knnMatch(np.asarray(des1), np.asarray(des2), k=2)
+
+        matchesMask = [[0, 0] for i in range(len(matches))]
+
+        good = 0
+        for m, n in matches:
+            if m.distance < 0.8 * n.distance:
+                good += 1
+                matchesMask[i] = [1, 0]
+
+        matchesDict[file] = good
+
+
         # gt = util.normalize(gt, 255)
         # print file
         # cv.imshow("file", gt)
