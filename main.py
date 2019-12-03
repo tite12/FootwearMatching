@@ -29,11 +29,19 @@ signalLearning = False
 edgeDetection = False
 processFiltered = False
 siftMatchFiles = False
-denseSiftMatchFiles = False
+
 surfMatchFiles = False
-denseSurfMatchFiles = False
+
+
+lbpMatchFiles = False
 signalMatchFiles = False
+denseSiftMatchFiles = True
+denseSurfMatchFiles = True
+
 lbpMatchFiles = True
+signalMatchFiles = True
+denseSiftMatchFiles = False
+denseSurfMatchFiles = False
 
 def click_and_show(event, x, y, flags, param) :
     global lbpImg
@@ -214,22 +222,23 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/00009_filtered.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017.jpg', 0)
 # imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 
 # roi = cv.selectROI("Select noise area", img)
 
 # noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00009_noise.jpg', 0)
-mask = doThresholding.otsuThreshold(mask) / 255
-# mask = np.zeros(img.shape, np.uint8)
+# mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00250_noise.jpg', 0)
+# mask = doThresholding.otsuThreshold(mask) / 255
+mask = np.zeros(img.shape, np.uint8)
 
 if lbpMatchFiles :
     print("LBP match files")
     window = 5
 
     bf = cv.BFMatcher()
+    flann = cv.DescriptorMatcher_create(cv.DescriptorMatcher_FLANNBASED)
 
     img = doThresholding.otsuThreshold(img)
 
@@ -249,8 +258,9 @@ if lbpMatchFiles :
     path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
     files = glob.glob(path)
     matchesDict = {}
+    flannMatchesDict = {}
     for file in files:
-        print(file)
+        # print(file)
         gt = cv.imread(file, 0)
         gt = cv.resize(gt, (width, height))
         gt = doThresholding.otsuThreshold(gt)
@@ -267,6 +277,7 @@ if lbpMatchFiles :
                 des2.append(np.float32(gtLBP.reshape((-1, 1))))
 
         matches = bf.knnMatch(np.asarray(des1), np.asarray(des2), k=2)
+        flannMatches = flann.knnMatch(np.asarray(des1), np.asarray(des2), k=2)
 
         matchesMask = [[0, 0] for i in range(len(matches))]
 
@@ -278,12 +289,28 @@ if lbpMatchFiles :
 
         matchesDict[file] = good
 
-    sortedMatches = sorted(matchesDict.items(), key=operator.itemgetter(1))
+        good = 0
+        for m, n in flannMatches:
+            if m.distance < 0.8 * n.distance:
+                good += 1
+                matchesMask[i] = [1, 0]
 
+        flannMatchesDict[file] = good
+
+    sortedMatches = sorted(matchesDict.items(), key=operator.itemgetter(1))
+    sortedFlannMatches = sorted(flannMatchesDict.items(), key=operator.itemgetter(1))
+
+    print(".....................LBP BF matches...................")
     for match in sortedMatches:
         print(match[0])
         print(match[1])
-        print(";;;;;;;;;;;;;;;;;;;;")
+        print("::::::::::::::::::::::::::")
+
+    print(".....................LBP FLANN matches...................")
+    for match in sortedFlannMatches:
+        print(match[0])
+        print(match[1])
+        print("::::::::::::::::::::::::::")
 
 
 if signalMatchFiles :
@@ -291,6 +318,7 @@ if signalMatchFiles :
     window = 5
 
     bf = cv.BFMatcher()
+    flann = cv.DescriptorMatcher_create(cv.DescriptorMatcher_FLANNBASED)
 
     img = doThresholding.otsuThreshold(img)
 
@@ -311,8 +339,9 @@ if signalMatchFiles :
     path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
     files = glob.glob(path)
     matchesDict = {}
+    flannMatchesDict = {}
     for file in files:
-        print(file)
+        # print(file)
         gt = cv.imread(file, 0)
         gt = cv.resize(gt, (width, height))
         gt = doThresholding.otsuThreshold(gt)
@@ -332,6 +361,7 @@ if signalMatchFiles :
         # corr = signalTransform.correlation(img, gt)
         # matchesDict[file] = corr
         matches = bf.knnMatch(np.asarray(des1), np.asarray(des2), k=2)
+        flannMatches = flann.knnMatch(np.asarray(des1), np.asarray(des2), k=2)
 
         matchesMask = [[0, 0] for i in range(len(matches))]
 
@@ -343,6 +373,12 @@ if signalMatchFiles :
 
         matchesDict[file] = good
 
+        good = 0
+        for m, n in flannMatches:
+            if m.distance < 0.8 * n.distance:
+                good += 1
+
+        flannMatchesDict[file] = good
 
         # gt = util.normalize(gt, 255)
         # print file
@@ -350,29 +386,39 @@ if signalMatchFiles :
         # cv.waitKey(0)
         # cv.destroyAllWindows()
     sortedMatches = sorted(matchesDict.items(), key=operator.itemgetter(1))
+    sortedFlannMatches = sorted(flannMatchesDict.items(), key=operator.itemgetter(1))
 
+    print(".....................signal BF matches...................")
     for match in sortedMatches:
         print(match[0])
         print(match[1])
-        print(";;;;;;;;;;;;;;;;;;;;")
+        print(":::::::::::::::::::::::::::")
+
+    print(".....................signal FLANN matches...................")
+    for match in sortedFlannMatches:
+        print(match[0])
+        print(match[1])
+        print(":::::::::::::::::::::::::::")
 
 if siftMatchFiles or denseSiftMatchFiles :
     img = doThresholding.otsuThreshold(img)
 
     sift = cv.xfeatures2d.SIFT_create()
     FLANN_INDEX_LSH = 6
-    index_params = dict(algorithm=FLANN_INDEX_LSH,
-                        table_number=6,  # 12
-                        key_size=12,  # 20
-                        multi_probe_level=1)  # 2
-    search_params = dict(checks=50)  # or pass empty dictionary
-    flann = cv.FlannBasedMatcher(index_params, search_params)
+    # index_params = dict(algorithm=FLANN_INDEX_LSH,
+    #                     table_number=6,  # 12
+    #                     key_size=12,  # 20
+    #                     multi_probe_level=1)  # 2
+    # search_params = dict(checks=50)  # or pass empty dictionary
+    # flann = cv.FlannBasedMatcher(index_params, search_params)
+    flann = cv.DescriptorMatcher_create(cv.DescriptorMatcher_FLANNBASED)
     bf = cv.BFMatcher()
 
     files = []
     path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
     files = glob.glob(path)
     matchesDict = {}
+    flannMatchesDict = {}
 
     if siftMatchFiles :
         print("normal SIFT matching")
@@ -387,7 +433,7 @@ if siftMatchFiles or denseSiftMatchFiles :
 
 
         for file in files :
-            print("2")
+            # print("2")
             gt = cv.imread(file, 0)
 
             kp2, des2 = sift.detectAndCompute(gt, None)
@@ -425,10 +471,10 @@ if siftMatchFiles or denseSiftMatchFiles :
                 keypoints1.append(keypoint)
         des1 = sift.compute(img, keypoints1)
         keypoints1 = des1[0]
-        des1 = np.uint8(des1[1])
+        des1 = (des1[1])
 
         for file in files:
-            print("2")
+            # print("2")
             gt = cv.imread(file, 0)
 
             height, width = gt.shape
@@ -439,10 +485,12 @@ if siftMatchFiles or denseSiftMatchFiles :
                     keypoints2.append(keypoint)
             des2 = sift.compute(gt, keypoints2)
             keypoints2 = des2[0]
-            des2 = np.uint8(des2[1])
+            des2 = (des2[1])
             matches = bf.knnMatch(des1, des2, k=2)
+            flannMatches = flann.knnMatch(des1, des2, k=2)
 
             matchesMask = [[0, 0] for i in range(len(matches))]
+            flannMatchesMask = [[0, 0] for i in range(len(matches))]
 
             good = 0
             for m, n in matches:
@@ -452,22 +500,29 @@ if siftMatchFiles or denseSiftMatchFiles :
 
             matchesDict[file] = good
 
-            # draw_params = dict(matchColor=(0, 255, 0),
-            #                    singlePointColor=(255, 0, 0),
-            #                    matchesMask=matchesMask,
-            #                    flags=cv.DrawMatchesFlags_DEFAULT)
-            # img3 = cv.drawMatchesKnn(img, keypoints1, gt, keypoints2, matches, None, **draw_params)
-            # cv.imshow("matches", img3)
-            # cv.waitKey(0)
-            # cv.destroyAllWindows()
-            print("1")
+            good = 0
+            for i, (m, n) in enumerate(flannMatches):
+                if m.distance < 0.8 * n.distance:
+                    good += 1
+                    flannMatchesMask[i] = [1, 0]
+
+            flannMatchesDict[file] = good
+            # print("1")
 
     sortedMatches = sorted(matchesDict.items(), key=operator.itemgetter(1))
+    sortedFlannMatches = sorted(flannMatchesDict.items(), key=operator.itemgetter(1))
 
+    print(".....................dense SIFT BF matches...................")
     for match in  sortedMatches :
         print(match[0])
         print(match[1])
-        print(";;;;;;;;;;;;;;;;;;;;")
+        print(":::::::::::::::::::::::::::::::")
+
+    print(".....................dense SIFT FLANN matches...................")
+    for match in sortedFlannMatches:
+        print(match[0])
+        print(match[1])
+        print(":::::::::::::::::::::::::::::::")
 
 if surfMatchFiles or denseSurfMatchFiles :
     img = doThresholding.otsuThreshold(img)
@@ -475,11 +530,13 @@ if surfMatchFiles or denseSurfMatchFiles :
     minHessian = 400
     surf = cv.xfeatures2d_SURF.create(hessianThreshold=minHessian)
     flann = cv.DescriptorMatcher_create(cv.DescriptorMatcher_FLANNBASED)
+    bf = cv.BFMatcher()
 
     files = []
     path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
     files = glob.glob(path)
     matchesDict = {}
+    bfMatchesDict = {}
     if surfMatchFiles:
         print("normal SURF matching")
         kp1, des1 = surf.detectAndCompute(img, None)
@@ -526,7 +583,7 @@ if surfMatchFiles or denseSurfMatchFiles :
         des1 = des1[1]
 
         for file in files:
-            print("2")
+            # print("2")
             gt = cv.imread(file, 0)
             gt = doThresholding.otsuThreshold(gt)
             height, width = gt.shape
@@ -540,24 +597,40 @@ if surfMatchFiles or denseSurfMatchFiles :
             des2 = des2[1]
             # des2 = np.uint8(des2)
             matches = flann.knnMatch(des1, des2, k=2)
+            bfMatches = bf.knnMatch(des1, des2, k=2)
 
-            matchesMask = []
             good = 0
             for (m, n) in matches:
                 if m.distance < 0.8 * n.distance:
                     good += 1
-                    matchesMask.append(m)
 
             matchesDict[file] = good
 
-            print("1")
+            good = 0
+            for (m, n) in bfMatches:
+                if m.distance < 0.8 * n.distance:
+                    good += 1
+
+            bfMatchesDict[file] = good
+
+            # print("1")
 
     sortedMatches = sorted(matchesDict.items(), key=operator.itemgetter(1))
+    sortedBfMatches = sorted(bfMatchesDict.items(), key=operator.itemgetter(1))
 
+    print(".....................dense SURF BF matches...................")
+    for match in sortedBfMatches:
+        print(match[0])
+        print(match[1])
+        print("::::::::::::::::::::::::")
+
+    print(".....................dense SURF FLANN matches...................")
     for match in  sortedMatches :
         print(match[0])
         print(match[1])
-        print(";;;;;;;;;;;;;;;;;;;;")
+        print("::::::::::::::::::::::::")
+
+
 
 if processFiltered :
     img = doThresholding.otsuThreshold(img)
