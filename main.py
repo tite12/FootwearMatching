@@ -38,7 +38,7 @@ signalMatchFiles = False
 denseSiftMatchFiles = True
 denseSurfMatchFiles = True
 
-lbpMatchFiles = True
+lbpMatchFiles = False
 signalMatchFiles = True
 denseSiftMatchFiles = False
 denseSurfMatchFiles = False
@@ -222,16 +222,20 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/00223_filtered.jpg', 0)
 # imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 
 # roi = cv.selectROI("Select noise area", img)
 
 # noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-# mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00250_noise.jpg', 0)
-# mask = doThresholding.otsuThreshold(mask) / 255
-mask = np.zeros(img.shape, np.uint8)
+mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00223_noise.jpg', 0)
+mask = doThresholding.otsuThreshold(mask) / 255
+# mask = np.zeros(img.shape, np.uint8)
+
+files = []
+path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/backup/*.png"
+files = glob.glob(path)
 
 if lbpMatchFiles :
     print("LBP match files")
@@ -255,8 +259,6 @@ if lbpMatchFiles :
             imgLBP = LBP.basicLBP(currentPatch, 36, window)
             des1.append(np.float32(imgLBP.reshape((-1, 1))))
 
-    path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
-    files = glob.glob(path)
     matchesDict = {}
     flannMatchesDict = {}
     for file in files:
@@ -312,7 +314,6 @@ if lbpMatchFiles :
         print(match[1])
         print("::::::::::::::::::::::::::")
 
-
 if signalMatchFiles :
     print("Signal match files")
     window = 5
@@ -336,8 +337,6 @@ if signalMatchFiles :
             imgFM = signalTransform.calculateFourierMellin(currentPatch)
             des1.append(imgFM.reshape((-1, 1)))
 
-    path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
-    files = glob.glob(path)
     matchesDict = {}
     flannMatchesDict = {}
     for file in files:
@@ -414,9 +413,6 @@ if siftMatchFiles or denseSiftMatchFiles :
     flann = cv.DescriptorMatcher_create(cv.DescriptorMatcher_FLANNBASED)
     bf = cv.BFMatcher()
 
-    files = []
-    path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
-    files = glob.glob(path)
     matchesDict = {}
     flannMatchesDict = {}
 
@@ -532,9 +528,6 @@ if surfMatchFiles or denseSurfMatchFiles :
     flann = cv.DescriptorMatcher_create(cv.DescriptorMatcher_FLANNBASED)
     bf = cv.BFMatcher()
 
-    files = []
-    path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/*.png"
-    files = glob.glob(path)
     matchesDict = {}
     bfMatchesDict = {}
     if surfMatchFiles:
@@ -629,8 +622,6 @@ if surfMatchFiles or denseSurfMatchFiles :
         print(match[0])
         print(match[1])
         print("::::::::::::::::::::::::")
-
-
 
 if processFiltered :
     img = doThresholding.otsuThreshold(img)
