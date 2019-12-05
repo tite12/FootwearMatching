@@ -143,6 +143,9 @@ def eliminateNoise(img, xNoise, yNoise, windowSize = 6, otherScales = True) :
     if noiseHeight % 2 == 1 :
         noiseHeight = noiseHeight - 1
     noiseFM = calculateFourierMellin(img[yNoise:yNoise + noiseHeight, xNoise:xNoise + noiseWidth])
+    depth = noiseWidth * noiseHeight
+    fmWidth = noiseWidth
+    fmHeight = noiseHeight
     noiseWidth = noiseWidth / 2
     noiseHeight = noiseHeight / 2
     noiseMean = np.mean(noiseFM)
@@ -151,12 +154,14 @@ def eliminateNoise(img, xNoise, yNoise, windowSize = 6, otherScales = True) :
     result = np.zeros((height, width), np.float32)
 
     rep = cv.copyMakeBorder(img, noiseHeight, noiseHeight, noiseWidth, noiseWidth, cv.BORDER_REFLECT101)
+    fmCoeffs = np.zeros((height, width, depth))
     for x in range(width):
         xInd = x + noiseWidth
         for y in range(height):
             yInd = y + noiseHeight
             currentPatch = rep[yInd-noiseHeight:yInd+noiseHeight, xInd-noiseWidth:xInd+noiseWidth]
             imgFM = calculateFourierMellin(currentPatch)
+            fmCoeffs[y, x] = imgFM.reshape((1, -1))
             imgMean = np.mean(imgFM)
             imgFM = imgFM - imgMean
             corr = correlation(imgFM, noiseFM)
@@ -167,11 +172,11 @@ def eliminateNoise(img, xNoise, yNoise, windowSize = 6, otherScales = True) :
     result2X = np.zeros((height, width))
     result3X = np.zeros((height, width))
     if otherScales :
-        result2X = eliminateNoise(img, xNoise, yNoise, 2 * windowSize, False)
-        result3X = eliminateNoise(img, xNoise, yNoise, 3 * windowSize, False)
+        result2X, _, _, _ = eliminateNoise(img, xNoise, yNoise, 2 * windowSize, False)
+        result3X, _, _, _ = eliminateNoise(img, xNoise, yNoise, 3 * windowSize, False)
         result = result + result2X + result3X
         result = result / 3
-    return result
+    return result, fmCoeffs, fmWidth, fmHeight
 
 def correlation(img, noise) :
     img = img / 1000
