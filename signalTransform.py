@@ -143,6 +143,7 @@ def eliminateNoiseOnPattern(img, mask, window = 3) :
     dftImage = np.zeros((height, width, 2 * (2 * window) * (2 * window)))
     rep = cv.copyMakeBorder(img_float32, window, window, window, window, cv.BORDER_REFLECT101)
     noiseFM = np.zeros(((2 * window), (2 * window), 2))
+    noises = []
     for x in range(width) :
         xCoord = x + window
         for y in range(height) :
@@ -150,42 +151,67 @@ def eliminateNoiseOnPattern(img, mask, window = 3) :
             currentPatch = rep[yCoord - window:yCoord + window, xCoord - window:xCoord + window]
 
             dft = cv.dft(currentPatch, flags=cv.DFT_COMPLEX_OUTPUT)
-            dft_shift = np.fft.fftshift(dft)
+            dft_shift_sub = np.fft.fftshift(dft)
 
-            dftImage[y, x] = (dft_shift.reshape((-1, 1))).transpose()
+            dftImage[y, x] = (dft_shift_sub.reshape((-1, 1))).transpose()
+
             if mask[y, x] == 1 :
-                noiseFM += dft_shift
+                noiseFM += dft_shift_sub
+                noises.append((dft_shift_sub.reshape((-1, 1))).transpose())
+
 
     noiseFM /= np.sum(mask)
 
-    res = np.zeros(img.shape)
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    K = 8
+    ret, label, center = cv.kmeans(np.asarray(noises), K, None, criteria, 10, cv.KMEANS_RANDOM_CENTERS)
+
+    resSub = np.zeros(img.shape)
+    resAvg = np.zeros(img.shape)
     for x in range(width) :
         for y in range(height) :
             dft_shift = dftImage[y, x].reshape((2 * window, 2 * window, 2))
-            dft_shift -= noiseFM
+            dft_shift_sub = dft_shift - noiseFM
 
-            rows, cols = img.shape
-            crow, ccol = rows / 2, cols / 2  # center
+            corr = 0;
+            bestCorrIndex = 0
+            for i in range(len(center)) :
+                noise = center[i].reshape((2 * window, 2 * window, 2))
+                currCorr = correlation(dft_shift[:, :, 0], noise[:, :, 0])
+                currCorr += correlation(dft_shift[:, :, 1], noise[:, :, 1])
+                if currCorr > corr :
+                    corr = currCorr
+                    bestCorrIndex = i
+            dft_shift_avg = dft_shift - center[bestCorrIndex].reshape((2 * window, 2 * window, 2))
+
+            # rows, cols = img.shape
+            # crow, ccol = rows / 2, cols / 2  # center
 
             # create a mask first, center square is 1, remaining all zeros
             # mask = np.zeros((rows, cols, 2), np.uint8)
             # mask[crow - 30:crow + 30, ccol - 30:ccol + 30] = 1
             #
             # # apply mask and inverse DFT
-            # fshift = dft_shift * mask
-            f_ishift = np.fft.ifftshift(dft_shift)
+            # fshift = dft_shift_sub * mask
+            f_ishift = np.fft.ifftshift(dft_shift_sub)
             img_back = cv.idft(f_ishift)
             img_back = cv.magnitude(img_back[:, :, 0], img_back[:, :, 1])
 
-            res[y, x] = img_back[window, window]
+            resSub[y, x] = img_back[window, window]
 
-    plt.subplot(121), plt.imshow(img, cmap='gray')
-    plt.title('Input Image'), plt.xticks([]), plt.yticks([])
-    plt.subplot(122), plt.imshow(res, cmap='gray')
-    plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
+            f_ishift = np.fft.ifftshift(dft_shift_avg)
+            img_back = cv.idft(f_ishift)
+            img_back = cv.magnitude(img_back[:, :, 0], img_back[:, :, 1])
+
+            resAvg[y, x] = img_back[window, window]
+
+    plt.subplot(121), plt.imshow(resSub, cmap='gray')
+    plt.title('Sub'), plt.xticks([]), plt.yticks([])
+    plt.subplot(122), plt.imshow(resAvg, cmap='gray')
+    plt.title('Avg'), plt.xticks([]), plt.yticks([])
 
     plt.show()
-    return res
+    return resAvg
 
 
 def eliminateNoise(img, xNoise, yNoise, windowSize = 6, otherScales = True) :

@@ -222,14 +222,14 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/orig/00233.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/orig/00017.jpg', 0)
 # imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 
 # roi = cv.selectROI("Select noise area", img)
 
 # noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00233_noise.jpg', 0)
+mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00017_noise.jpg', 0)
 mask = doThresholding.otsuThreshold(mask) / 255
 # mask = np.zeros(img.shape, np.uint8)
 
@@ -698,10 +698,15 @@ if signal:
     cv.waitKey(0)
 
 if mainPipeline :
-    img = signalTransform.eliminateNoiseOnPattern(img, mask)
-    img = util.normalize(img, 255)
-    img = np.uint8(img)
+    imgProc = signalTransform.eliminateNoiseOnPattern(img, mask)
+    imgProc = util.normalize(imgProc, 255)
+    imgProc = np.uint8(imgProc)
+    imgProc, classes, equalized = filters.regionBasedNonLocalMeans(imgProc)
     img, classes, equalized = filters.regionBasedNonLocalMeans(img)
+
+    cv.imshow("img", img)
+    cv.imshow("imgProc", imgProc)
+    cv.waitKey(0)
 
     biggestClassIndex = 0
     biggestClassCount = 0
