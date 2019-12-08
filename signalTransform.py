@@ -5,6 +5,7 @@ import scipy.ndimage.interpolation as ndii
 import operator
 import util
 import histogramOperations
+from matplotlib import pyplot as plt
 
 # global constants
 RE_IDX = 0
@@ -107,33 +108,85 @@ def calculateFourierMellin(img) :
     imgMags = cv.magnitude(imgFftShifted[:, :, RE_IDX], imgFftShifted[:, :, IM_IDX])
 
 
-    # cv.imshow("magnitude", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgMags, 1))))
-    # cv.waitKey(0)
+    cv.imshow("magnitude", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgMags, 1))))
+    cv.waitKey(0)
 
 
     # Step 2 - Apply highpass filter on their magnitude spectrums
     highPassFilter = prepareHighPassFilter(imgMags)
     imgMagsFilter = imgMags * highPassFilter
 
-    # cv.imshow("filter", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgMagsFilter, 1))))
-    # cv.waitKey(0)
+    cv.imshow("filter", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgMagsFilter, 1))))
+    cv.waitKey(0)
 
     # Step 3 - Convert magnitudes both images to log-polar coordinates
     # Step 3.1 - Precompute parameters (both images have the same dimensions)
     centerTrans, angleStep, logBase = computeLogPolarParameters(imgMagsFilter)
     imgLogPolar = convertToLogPolar(imgMagsFilter, centerTrans, angleStep, logBase, polarMode)
 
-    # cv.imshow("log polar", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgLogPolar, 1))))
-    # cv.waitKey(0)
+    cv.imshow("log polar", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgLogPolar, 1))))
+    cv.waitKey(0)
 
     # Step 3.1 - Apply FFT on magnitude spectrums in log polar coordinates (in this case, not using FFT shift as it leads to computing [180-angle] results)
     imgLogPolarComplex = cv.dft(np.float32(imgLogPolar), flags=cv.DFT_COMPLEX_OUTPUT)
     imgLogPolarComplexMags = cv.magnitude(imgLogPolarComplex[:, :, RE_IDX], imgLogPolarComplex[:, :, IM_IDX])
 
-    # cv.imshow("complex mags", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgLogPolarComplexMags, 255))))
-    # cv.waitKey(0)
+    cv.imshow("complex mags", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgLogPolarComplexMags, 255))))
+    cv.waitKey(0)
 
     return imgLogPolarComplexMags
+
+def eliminateNoiseOnPattern(img, mask, window = 3) :
+    img_float32 = np.float32(img)
+
+    height, width = img.shape
+    dftImage = np.zeros((height, width, 2 * (2 * window) * (2 * window)))
+    rep = cv.copyMakeBorder(img_float32, window, window, window, window, cv.BORDER_REFLECT101)
+    noiseFM = np.zeros(((2 * window), (2 * window), 2))
+    for x in range(width) :
+        xCoord = x + window
+        for y in range(height) :
+            yCoord = y + window
+            currentPatch = rep[yCoord - window:yCoord + window, xCoord - window:xCoord + window]
+
+            dft = cv.dft(currentPatch, flags=cv.DFT_COMPLEX_OUTPUT)
+            dft_shift = np.fft.fftshift(dft)
+
+            dftImage[y, x] = (dft_shift.reshape((-1, 1))).transpose()
+            if mask[y, x] == 1 :
+                noiseFM += dft_shift
+
+    noiseFM /= np.sum(mask)
+
+    res = np.zeros(img.shape)
+    for x in range(width) :
+        for y in range(height) :
+            dft_shift = dftImage[y, x].reshape((2 * window, 2 * window, 2))
+            dft_shift -= noiseFM
+
+            rows, cols = img.shape
+            crow, ccol = rows / 2, cols / 2  # center
+
+            # create a mask first, center square is 1, remaining all zeros
+            # mask = np.zeros((rows, cols, 2), np.uint8)
+            # mask[crow - 30:crow + 30, ccol - 30:ccol + 30] = 1
+            #
+            # # apply mask and inverse DFT
+            # fshift = dft_shift * mask
+            f_ishift = np.fft.ifftshift(dft_shift)
+            img_back = cv.idft(f_ishift)
+            img_back = cv.magnitude(img_back[:, :, 0], img_back[:, :, 1])
+
+            res[y, x] = img_back[window, window]
+
+    plt.subplot(121), plt.imshow(img, cmap='gray')
+    plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+    plt.subplot(122), plt.imshow(res, cmap='gray')
+    plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
+
+    plt.show()
+    return res
+
 
 def eliminateNoise(img, xNoise, yNoise, windowSize = 6, otherScales = True) :
     noiseHeight = windowSize
@@ -154,14 +207,12 @@ def eliminateNoise(img, xNoise, yNoise, windowSize = 6, otherScales = True) :
     result = np.zeros((height, width), np.float32)
 
     rep = cv.copyMakeBorder(img, noiseHeight, noiseHeight, noiseWidth, noiseWidth, cv.BORDER_REFLECT101)
-    fmCoeffs = np.zeros((height, width, depth))
     for x in range(width):
         xInd = x + noiseWidth
         for y in range(height):
             yInd = y + noiseHeight
             currentPatch = rep[yInd-noiseHeight:yInd+noiseHeight, xInd-noiseWidth:xInd+noiseWidth]
             imgFM = calculateFourierMellin(currentPatch)
-            fmCoeffs[y, x] = imgFM.reshape((1, -1))
             imgMean = np.mean(imgFM)
             imgFM = imgFM - imgMean
             corr = correlation(imgFM, noiseFM)
@@ -172,11 +223,11 @@ def eliminateNoise(img, xNoise, yNoise, windowSize = 6, otherScales = True) :
     result2X = np.zeros((height, width))
     result3X = np.zeros((height, width))
     if otherScales :
-        result2X, _, _, _ = eliminateNoise(img, xNoise, yNoise, 2 * windowSize, False)
-        result3X, _, _, _ = eliminateNoise(img, xNoise, yNoise, 3 * windowSize, False)
+        result2X = eliminateNoise(img, xNoise, yNoise, 2 * windowSize, False)
+        result3X= eliminateNoise(img, xNoise, yNoise, 3 * windowSize, False)
         result = result + result2X + result3X
         result = result / 3
-    return result, fmCoeffs, fmWidth, fmHeight
+    return result
 
 def correlation(img, noise) :
     img = img / 1000

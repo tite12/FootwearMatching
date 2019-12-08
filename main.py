@@ -20,11 +20,11 @@ import signalTransform
 firstVersionPreprocessing = False
 LBPdenoising = False
 LBPLearning = False
-mainPipeline = False
+mainPipeline = True
 SIFTdescriptor = False
 HOGdescriptor = False
 lbpImg = np.empty((0, 0))
-signal = True
+signal = False
 signalLearning = False
 edgeDetection = False
 processFiltered = False
@@ -222,15 +222,15 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/orig/00066.jpg', 0)
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/orig/00233.jpg', 0)
 # imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 
-roi = cv.selectROI("Select noise area", img)
+# roi = cv.selectROI("Select noise area", img)
 
-noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+# noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-# mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00250_noise.jpg', 0)
-# mask = doThresholding.otsuThreshold(mask) / 255
+mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00233_noise.jpg', 0)
+mask = doThresholding.otsuThreshold(mask) / 255
 # mask = np.zeros(img.shape, np.uint8)
 
 files = []
@@ -682,7 +682,7 @@ if processFiltered :
 
 if signal:
     # test = np.repeat(img, 2, axis=2)
-    corr, fmCoeffs, fmWidth, fmHeight = signalTransform.eliminateNoise(img, roi[0], roi[1], 6, False )
+    corr = signalTransform.eliminateNoise(img, roi[0], roi[1], 106, False )
     corr = np.uint8(util.normalize(corr, 255))
     # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00204_corr.jpg', corr)
     # corr = noiseImg
@@ -692,22 +692,15 @@ if signal:
     morph = cv.morphologyEx(morph, cv.MORPH_CLOSE, kernel)
     mask = util.normalize(morph, 1)
 
-    height, width, depth = fmCoeffs.shape
-    noiseFM = []
-    for x in range(width) :
-        for y in range(height) :
-            if mask[y, x] == 1 :
-                noiseFM.append(fmCoeffs[y, x, :])
-    averageFM = np.mean(noiseFM, 0)
-    averageFM = averageFM.reshape((fmHeight, fmWidth))
-
-
     # img = np.uint8(diffTh)
     cv.imshow("mask", mask)
     cv.imshow("th", th)
     cv.waitKey(0)
 
 if mainPipeline :
+    img = signalTransform.eliminateNoiseOnPattern(img, mask)
+    img = util.normalize(img, 255)
+    img = np.uint8(img)
     img, classes, equalized = filters.regionBasedNonLocalMeans(img)
 
     biggestClassIndex = 0
