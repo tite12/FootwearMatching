@@ -95,8 +95,10 @@ def nonLocalGrouping(img) :
             diffImg[y, x] = abs(eigVal1 - eigVal2)
     return diffImg
 
-def regionBasedNonLocalMeans(img, mod = False) :
+def regionBasedNonLocalMeans(img, tryEqualize = True, mod = False) :
     diffImg = nonLocalGrouping(img)
+    # cv.imshow("diff", util.normalize(diffImg, 1))
+    # cv.waitKey(0)
     if mod :
         tmp = diffImg
         tmp[tmp == 0] = np.nan
@@ -121,17 +123,18 @@ def regionBasedNonLocalMeans(img, mod = False) :
     dataPixels = height * width
     dataPixels = dataPixels * 0.6
 
-    print("recalculate?")
-    print(int(sortedMaskSize[-1][1]))
-    print dataPixels
+    # print("recalculate?")
+    # print(int(sortedMaskSize[-1][1]))
+    # print dataPixels
     equalized = False
-    if sortedMaskSize[-1][1] > dataPixels :
-        diffImg = np.uint8(util.normalize(diffImg, 255))
-        diffImg = histogramOperations.equalizeHistogram(diffImg)
-        maskSize, masks, mapping = fillClasses(diffImg, classes)
-        sortedMaskSize = sorted(maskSize.items(), key=operator.itemgetter(1))
-        print("I was here")
-        equalized = True
+    if tryEqualize :
+        if sortedMaskSize[-1][1] > dataPixels :
+            diffImg = np.uint8(util.normalize(diffImg, 255))
+            diffImg = histogramOperations.equalizeHistogram(diffImg)
+            maskSize, masks, mapping = fillClasses(diffImg, classes)
+            sortedMaskSize = sorted(maskSize.items(), key=operator.itemgetter(1))
+            print("I was here")
+            equalized = True
 
     means = []
     majorMeans = []

@@ -54,7 +54,7 @@ def click_and_show(event, x, y, flags, param) :
 
 if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
     img3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
-    img9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009.jpg', 0)
+    img9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017.jpg', 0)
     img17 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017.jpg', 0)
     img20 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00020.jpg', 0)
     img21 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00021.jpg', 0)
@@ -63,7 +63,7 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
 
     mask3 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003_mask.jpg', 0)
     _, mask3 = cv.threshold(mask3, 125, 1, cv.THRESH_BINARY_INV)
-    mask9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00009_mask.jpg', 0)
+    mask9 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017_mask.jpg', 0)
     _, mask9 = cv.threshold(mask9, 125, 1, cv.THRESH_BINARY_INV)
     mask17 = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00017_mask.jpg', 0)
     _, mask17 = cv.threshold(mask17, 125, 1, cv.THRESH_BINARY_INV)
@@ -222,20 +222,22 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/orig/00017.jpg', 0)
+name = '00250'
+
+img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/orig/' + name + '.jpg', 0)
 # imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 
 # roi = cv.selectROI("Select noise area", img)
 
 # noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00017_noise.jpg', 0)
+mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/' + name + '_noise.jpg', 0)
 mask = doThresholding.otsuThreshold(mask) / 255
 # mask = np.zeros(img.shape, np.uint8)
 
-files = []
-path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/backup/*.png"
-files = glob.glob(path)
+# files = []
+# path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/backup/*.png"
+# files = glob.glob(path)
 
 if lbpMatchFiles :
     print("LBP match files")
@@ -698,15 +700,22 @@ if signal:
     cv.waitKey(0)
 
 if mainPipeline :
-    imgProc = signalTransform.eliminateNoiseOnPattern(img, mask)
-    imgProc = util.normalize(imgProc, 255)
-    imgProc = np.uint8(imgProc)
-    imgProc, classes, equalized = filters.regionBasedNonLocalMeans(imgProc)
-    img, classes, equalized = filters.regionBasedNonLocalMeans(img)
+    areaMask = np.sum(mask)
+    height, width = img.shape
+    areaImg = width * height
+    imgProc = img
+    tryEqualize = True
+    if areaMask >=  0.2 * areaImg :
+        print("eliminate noise")
+        # imgProc = signalTransform.eliminateNoiseOnPattern(img, mask)
+        imgProc = cv.imread(
+            'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/new/fourier/' + name + '_avg.jpg',
+            0)
+        tryEqualize = False
 
-    cv.imshow("img", img)
-    cv.imshow("imgProc", imgProc)
-    cv.waitKey(0)
+
+    img, classes, equalized = filters.regionBasedNonLocalMeans(imgProc, tryEqualize=tryEqualize)
+
 
     biggestClassIndex = 0
     biggestClassCount = 0
@@ -747,9 +756,9 @@ if mainPipeline :
     cv.imshow("morph", morph)
     cv.waitKey(0)
     #
-    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00009_extracted.jpg', adaptive)
-    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00009_filtered.jpg', morph)
-    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00009_noise.jpg', mask * 255)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/new/k25/centroids/' + name + '_extracted.jpg', adaptive)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/new/k25/centroids/' + name + '_filtered.jpg', morph)
+    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00017_noise.jpg', mask * 255)
 
 if edgeDetection:
     noiseImg = doThresholding.otsuThreshold(noiseImg) / 255

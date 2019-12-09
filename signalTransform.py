@@ -211,6 +211,15 @@ def eliminateNoiseOnPattern(img, mask, window = 3) :
     plt.title('Avg'), plt.xticks([]), plt.yticks([])
 
     plt.show()
+
+    resAvg = np.uint8(util.normalize(resAvg, 255))
+    resSub = np.uint8(util.normalize(resSub, 255))
+
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/new/fourier/00250_avg.jpg', resAvg)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/new/fourier/00250'
+               '_sum.jpg', resSub)
+
+
     return resAvg
 
 
