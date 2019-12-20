@@ -17,10 +17,10 @@ import pixelDescriptor
 import signalTransform
 
 
-firstVersionPreprocessing = False
+firstVersionPreprocessing = True
 LBPdenoising = False
 LBPLearning = False
-mainPipeline = True
+mainPipeline = False
 SIFTdescriptor = False
 HOGdescriptor = False
 lbpImg = np.empty((0, 0))
@@ -38,10 +38,6 @@ signalMatchFiles = False
 denseSiftMatchFiles = False
 denseSurfMatchFiles = False
 
-# lbpMatchFiles = False
-# signalMatchFiles = True
-# denseSiftMatchFiles = False
-# denseSurfMatchFiles = False
 
 def click_and_show(event, x, y, flags, param) :
     global lbpImg
@@ -79,7 +75,7 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
     # cv.imshow("mask", mask66)
     # cv.waitKey(0)
 
-    test = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/output_00025_FM.jpg', 0)
+    test = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/000182.jpg', 0)
 
     # cv.imshow("orig", img25)
     # cv.imshow("mask", test)
@@ -188,10 +184,12 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
 
     if signalLearning :
         # features = signalTransform.threeLayeredLearning(images, masks)
+        print("reading feature")
         features = np.loadtxt(
             'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/discriminative_FM.txt',
             delimiter=',')
-        img = img21.copy()
+        print("features read")
+        img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/easy/00223.jpg', 0)
         windowHeight = 5
         windowWidth = 5
         rep = cv.copyMakeBorder(img, windowHeight, windowHeight, windowWidth, windowWidth, cv.BORDER_REFLECT101)
@@ -216,29 +214,31 @@ if HOGdescriptor or SIFTdescriptor or LBPLearning or signalLearning :
             print x
         res = util.normalize(res, 1)
         cv.imwrite(
-            'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/FM/output_00021_FM_window5.jpg',
+            'C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/FM/output_00223_FM_window5.jpg',
             res * 255)
         cv.imshow("res", res)
         cv.imshow("res2", img - np.uint8((1 - res) * 255))
         cv.waitKey(0)
 
-name = '00250'
+name = '00021'
 
-img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/orig/' + name + '.jpg', 0)
+imgOrig = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/new/k25/centroids/' + name + '_filtered.jpg', 0)
 # imgGT = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/training/00003.png', 0)
 
 # roi = cv.selectROI("Select noise area", img)
 
 # noiseImg = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-mask = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/' + name + '_noise.jpg', 0)
-mask = doThresholding.otsuThreshold(mask) / 255
-# mask = np.zeros(img.shape, np.uint8)
+maskOrig = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/' + name + '_noise.jpg', 0)
+maskOrig = doThresholding.otsuThreshold(maskOrig) / 255
+# maskOrig = np.zeros(imgOrig.shape, np.uint8)
 
-# files = []
-# path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/backup/*.png"
-# files = glob.glob(path)
+files = []
+path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/backup/*.png"
+files = glob.glob(path)
 
+mask = maskOrig
+img = imgOrig
 if lbpMatchFiles :
     print("LBP match files")
     window = 5
@@ -316,6 +316,8 @@ if lbpMatchFiles :
         print(match[1])
         print("::::::::::::::::::::::::::")
 
+mask = maskOrig
+img = imgOrig
 if signalMatchFiles :
     print("Signal match files")
     window = 5
@@ -401,6 +403,8 @@ if signalMatchFiles :
         print(match[1])
         print(":::::::::::::::::::::::::::")
 
+mask = maskOrig
+img = imgOrig
 if siftMatchFiles or denseSiftMatchFiles :
     img = doThresholding.otsuThreshold(img)
 
@@ -522,6 +526,8 @@ if siftMatchFiles or denseSiftMatchFiles :
         print(match[1])
         print(":::::::::::::::::::::::::::::::")
 
+mask = maskOrig
+img = imgOrig
 if surfMatchFiles or denseSurfMatchFiles :
     img = doThresholding.otsuThreshold(img)
 
@@ -625,60 +631,60 @@ if surfMatchFiles or denseSurfMatchFiles :
         print(match[1])
         print("::::::::::::::::::::::::")
 
-if processFiltered :
-    img = doThresholding.otsuThreshold(img)
-    # kernel = np.ones((2, 2), np.uint8)
-    # img = cv.dilate(img, kernel)
-    # # img = doThresholding.calculateSkeleton(img)
-    # cv.imshow("rees", img)
+# if processFiltered :
+    # img = doThresholding.otsuThreshold(img)
+    # # kernel = np.ones((2, 2), np.uint8)
+    # # img = cv.dilate(img, kernel)
+    # # # img = doThresholding.calculateSkeleton(img)
+    # # cv.imshow("rees", img)
+    # # cv.waitKey(0)
+    #
+    # im2, contours, hierachy = cv.findContours(255-img, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_NONE )
+    #
+    # closedContoursImg = np.zeros(img.shape, np.uint8)
+    # openContoursImg = np.zeros(img.shape, np.uint8)
+    # openContours = []
+    # closedContours = []
+    # approxImgOpen = np.zeros(img.shape)
+    # approxImgClosed = np.zeros(img.shape)
+    # hierachy = hierachy[0]
+    # for i in range(0, len(contours)):
+    #     if hierachy[i][2] < 0:
+    #         openContours.append(contours[i])
+    #         epsilon = 0.03 * cv.arcLength(contours[i], True)
+    #         approx = cv.approxPolyDP(contours[i], epsilon, False)
+    #
+    #         # cv.drawContours(approxImgOpen, contours[i], -1, 255, 1)
+    #         cv.drawContours(approxImgOpen, [approx], -1, 255, 1)
+    #         for contour in contours[i]:
+    #             for point in contour:
+    #                 openContoursImg[point[1], point[0]] = 255
+    #     else :
+    #         closedContours.append(contours[i])
+    #         epsilon = 0.03 * cv.arcLength( contours[i], True)
+    #         approx = cv.approxPolyDP( contours[i], epsilon, False)
+    #
+    #         # cv.drawContours(approxImgClosed,  contours[i], -1, 255, 1)
+    #         cv.drawContours(approxImgClosed, [approx], -1, 255, 1)
+    #         for contour in contours[i] :
+    #             for point in contour:
+    #                 closedContoursImg[point[1], point[0]] = 255
+    #
+    #
+    #
+    #
+    # im2 = closedContoursImg + openContoursImg
+    # # openContoursImg = filters.eliminateLineNoise(openContoursImg, 100)
+    # # closedContoursImg = filters.eliminateLineNoise(closedContoursImg, 0.9, True)
+    # cv.imshow("rees", closedContoursImg + openContoursImg)
+    # cv.imshow("orig",im2)
+    # cv.imshow("img", img)
+    # cv.imshow("open", openContoursImg)
+    # cv.imshow("close", closedContoursImg)
+    # cv.imshow("approx open", approxImgOpen)
+    # cv.imshow("approx closed", approxImgClosed)
+    # cv.imshow("approx added", approxImgClosed + approxImgOpen)
     # cv.waitKey(0)
-
-    im2, contours, hierachy = cv.findContours(255-img, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_NONE )
-
-    closedContoursImg = np.zeros(img.shape, np.uint8)
-    openContoursImg = np.zeros(img.shape, np.uint8)
-    openContours = []
-    closedContours = []
-    approxImgOpen = np.zeros(img.shape)
-    approxImgClosed = np.zeros(img.shape)
-    hierachy = hierachy[0]
-    for i in range(0, len(contours)):
-        if hierachy[i][2] < 0:
-            openContours.append(contours[i])
-            epsilon = 0.03 * cv.arcLength(contours[i], True)
-            approx = cv.approxPolyDP(contours[i], epsilon, False)
-
-            # cv.drawContours(approxImgOpen, contours[i], -1, 255, 1)
-            cv.drawContours(approxImgOpen, [approx], -1, 255, 1)
-            for contour in contours[i]:
-                for point in contour:
-                    openContoursImg[point[1], point[0]] = 255
-        else :
-            closedContours.append(contours[i])
-            epsilon = 0.03 * cv.arcLength( contours[i], True)
-            approx = cv.approxPolyDP( contours[i], epsilon, False)
-
-            # cv.drawContours(approxImgClosed,  contours[i], -1, 255, 1)
-            cv.drawContours(approxImgClosed, [approx], -1, 255, 1)
-            for contour in contours[i] :
-                for point in contour:
-                    closedContoursImg[point[1], point[0]] = 255
-
-
-
-
-    im2 = closedContoursImg + openContoursImg
-    # openContoursImg = filters.eliminateLineNoise(openContoursImg, 100)
-    # closedContoursImg = filters.eliminateLineNoise(closedContoursImg, 0.9, True)
-    cv.imshow("rees", closedContoursImg + openContoursImg)
-    cv.imshow("orig",im2)
-    cv.imshow("img", img)
-    cv.imshow("open", openContoursImg)
-    cv.imshow("close", closedContoursImg)
-    cv.imshow("approx open", approxImgOpen)
-    cv.imshow("approx closed", approxImgClosed)
-    cv.imshow("approx added", approxImgClosed + approxImgOpen)
-    cv.waitKey(0)
 
 
 
@@ -715,7 +721,6 @@ if mainPipeline :
 
 
     img, classes, equalized = filters.regionBasedNonLocalMeans(imgProc, tryEqualize=tryEqualize)
-
 
     biggestClassIndex = 0
     biggestClassCount = 0
@@ -756,8 +761,8 @@ if mainPipeline :
     cv.imshow("morph", morph)
     cv.waitKey(0)
     #
-    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/new/k25/centroids/' + name + '_extracted.jpg', adaptive)
-    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/new/k25/centroids/' + name + '_filtered.jpg', morph)
+    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/new/k20/mean/' + name + '_extracted.jpg', adaptive)
+    # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/new/k20/mean/' + name + '_filtered.jpg', morph)
     # cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/00017_noise.jpg', mask * 255)
 
 if edgeDetection:
@@ -895,6 +900,9 @@ if LBPdenoising :
     # cv.destroyAllWindows()
 
 if (firstVersionPreprocessing) :
+    name = '000232'
+    img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/backup/' + name + '.png', 0)
+
     bgrImg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
 
     norm = util.normalize(img, 1.0)
@@ -903,8 +911,8 @@ if (firstVersionPreprocessing) :
     pde = filters.pde(bgrImg.copy())
     img_pde = bgrImg - pde
 
-    epf = filters.epf(bgrImg.copy())
-    img_epf = bgrImg - epf
+    # epf = filters.epf(bgrImg.copy())
+    # img_epf = bgrImg - epf
 
     median5 = filters.median(img.copy(), 5)
     median9 = filters.median(img.copy(), 9)
@@ -934,8 +942,8 @@ if (firstVersionPreprocessing) :
     cv.imshow("img-wienerBi5", img_wienerBi5)
     cv.imshow("img-pde", img_pde)
     cv.imshow("pde", pde)
-    cv.imshow("img-epf", img_epf)
-    cv.imshow("epf", epf)
+    # cv.imshow("img-epf", img_epf)
+    # cv.imshow("epf", epf)
     cv.imshow("img-med5", img_med5)
     cv.imshow("med5", median5)
     cv.imshow("img-med9", img_med9)
@@ -1064,6 +1072,24 @@ if (firstVersionPreprocessing) :
     cv.imshow("skeleton Hist", skelHist)
     cv.imshow("thinning", thin)
     cv.imshow("thinning Hist", thinHist)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+    # =============postprocessing====================
+
+
+    niblackHist = filters.eliminateLineNoise(np.uint8(niblackHist), 80)
+    niblackHist = filters.eliminateLineNoise(255 - niblackHist, 80)
+    niblackHist = filters.eliminateOpenStructures(niblackHist)
+
+    niblack = filters.eliminateLineNoise(np.uint8(niblack), 50)
+    niblack = filters.eliminateLineNoise(255 - niblack, 50)
+    niblack = filters.eliminateOpenStructures(niblack)
+
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/backup/automated/' + name + '_smqt_bi.jpg', niblack)
+    cv.imwrite('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/GT/backup/automated/' + name + '_hist_fuzzy.jpg', niblackHist)
+    cv.imshow("niblack", niblack)
+    cv.imshow("niblack hist", niblackHist)
     cv.waitKey(0)
     cv.destroyAllWindows()
 

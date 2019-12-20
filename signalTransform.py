@@ -108,31 +108,31 @@ def calculateFourierMellin(img) :
     imgMags = cv.magnitude(imgFftShifted[:, :, RE_IDX], imgFftShifted[:, :, IM_IDX])
 
 
-    cv.imshow("magnitude", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgMags, 1))))
-    cv.waitKey(0)
+    # cv.imshow("magnitude", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgMags, 1))))
+    # cv.waitKey(0)
 
 
     # Step 2 - Apply highpass filter on their magnitude spectrums
     highPassFilter = prepareHighPassFilter(imgMags)
     imgMagsFilter = imgMags * highPassFilter
 
-    cv.imshow("filter", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgMagsFilter, 1))))
-    cv.waitKey(0)
+    # cv.imshow("filter", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgMagsFilter, 1))))
+    # cv.waitKey(0)
 
     # Step 3 - Convert magnitudes both images to log-polar coordinates
     # Step 3.1 - Precompute parameters (both images have the same dimensions)
     centerTrans, angleStep, logBase = computeLogPolarParameters(imgMagsFilter)
     imgLogPolar = convertToLogPolar(imgMagsFilter, centerTrans, angleStep, logBase, polarMode)
 
-    cv.imshow("log polar", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgLogPolar, 1))))
-    cv.waitKey(0)
+    # cv.imshow("log polar", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgLogPolar, 1))))
+    # cv.waitKey(0)
 
     # Step 3.1 - Apply FFT on magnitude spectrums in log polar coordinates (in this case, not using FFT shift as it leads to computing [180-angle] results)
     imgLogPolarComplex = cv.dft(np.float32(imgLogPolar), flags=cv.DFT_COMPLEX_OUTPUT)
     imgLogPolarComplexMags = cv.magnitude(imgLogPolarComplex[:, :, RE_IDX], imgLogPolarComplex[:, :, IM_IDX])
 
-    cv.imshow("complex mags", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgLogPolarComplexMags, 255))))
-    cv.waitKey(0)
+    # cv.imshow("complex mags", histogramOperations.equalizeHistogram(np.uint8(util.normalize(imgLogPolarComplexMags, 255))))
+    # cv.waitKey(0)
 
     return imgLogPolarComplexMags
 
