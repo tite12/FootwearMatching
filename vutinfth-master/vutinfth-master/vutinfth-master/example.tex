@@ -125,7 +125,7 @@ The two main steps of shoeprint identification are enhancement and matching.
 \par
 In this thesis the possibilities for enhancement of shoeprint samples from a real-life dataset are investigated.
 The main challange of this task is to correctly filter the pattern regardless the versitile, possibly heavily structured and clutterd noise on the samples.
-Two approaches are examined, pattern enhancement and noise suppression.
+Two main approaches are examined, pattern enhancement and noise suppression.
 Among fully automated methods, a semi-automated technique is also tested, where user input is required for noise separation.
 \par
 The main goal of this work is to find a universal approach which is able to filter and enhance the shoeprint data even in the presence of noise and the possible low image quality.
@@ -203,74 +203,11 @@ Because of that it is difficult to compare their performance and to estimate whi
 Furthermore it is challanging to plan a new algorithm based on the published results because their lack of a uniform baseline.
 
 \section{Contribution}
-\par
-In this thesis the possible ways of enhancing a shoeprint images are discussed.
-Because of the known issues on database multiple approaches are implemented, discussed and evaluated.
-The two ways to increase the quality of a given shoeprint sample is to enhance the pattern regardless of the noise and to supress or eliminate the noise without losing any of pattern information.
-Along fully-automated methods semi-automated possibilities are also considered.
-Three different approaches are introduced and examined for their performance on real-life image samples.
-\par
-Finally a new semi-autoamted framework is given which is evaluated on the FID-300 database.
-In the first step user ipnut about the noise is required.
-The input is separated into tiles, and the subparts are compared based on the Fourier-Mellin features to the region of the use input.
-In that way the background is separated from the foreground and the average appearance of the image is calculated.
-Since noise appears on the pattern as well, the distorted parts are corrected based on the calculated noise model.
-After that gradient based line detection is perfromed and the results are separated into clusters where pattern and noise classes are defined and candidates of the latter are eliminated.
-The final image is thresholded to create a binary image, where the shoeprint is clearly visible and recognizable whereas the clutter is supressed on the pattern and eliminated in the background of the image.
-Throughout the whole processing pipeline morphological opeartions and small structure elimination is applyed multiple times.
-First when a mask for background is built, and also in the end of the pipeline to eliminate small inconsistencies on the pattern.
-Experimental results show, that the enhanced images are clearer, the background is successfully eliminated and the shoeprint pattern is less noisy than on the original images.
-Figure \ref{fig:example} shows an example sample from the FID-300 database \ref{fig:intro:orig} and the enhanced images \ref{fig:intro:enhanced} with the proposed algorithm.
-Moreover the  matching of the sample and the enhanced images with their in a laboratory lifted pair according to basic image features such as SIFT and SURF indicate that the improved images have a better matching rate than its original version.
-
-
-\begin{figure}[h]
-  \centering
-  \begin{subfigure}[b]{0.45\columnwidth}
-    \centering
-    \includegraphics[width=\textwidth]{1/00182.jpg}
-    \subcaption{Example image from the FID-300 database}
-    \label{fig:intro:orig}
-  \end{subfigure}
-  \begin{subfigure}[b]{0.45\columnwidth}
-    \centering
-    \includegraphics[width=\textwidth]{1/00182_filtered.jpg}
-    \subcaption{Enhanced image}
-    \label{fig:intro:enhanced}
-  \end{subfigure}
-  \caption{Result of the proposed algorithm}
-  \label{fig:example}
-\end{figure}
 
 \section{Structure of the Work}
-\par
-To gain an overview about the research already done the followong section, Capter 2, gives a review about the literature. 
-Along papers published in the topic of shoeprint identification, matching and enhancement, research of similar domains is presented as well.
-Fields of fingerprint processing and tattoo identification is also overviewed for possibilities of using the tecniques in the given problem.
-Furthermore natural image enhancement and denoising tecniques are revised as well.
-\par
-In Chapter 3, 4 and 5 the approaches for enhancement are given and discussed if they are applicable for real-life forensic images.
-Chapter 3 presents and evaluates a possible way for pattern enhancement.
-Chapter 4 and 5 describes an automated and a semi-automated noise supression pipeline respectively.
-In Chapter 5 the new algorithm for enhancing real-life crimescene shoeprint impressions is proposed.
-Details on implementation are revealed as well.
-\par
-In Chapter 6 experimental results are shown and the proposed algorithm is evaluated.
-In Chapters 7 and 8 prospective future work is discussed and the final conclusion is given. 
 
-\chapter{Related Work}
-
-\chapter{Pattern Enhancement}
-
-\chapter{Fully Automated Noise Supression}
-
-\chapter{Semi-Automated Noise Supression}
-
-\chapter{Results and EValuation}
-
-\chapter{Future Work}
-
-\chapter{Conclusion}
+\chapter{Additional Chapter}
+\todo{Enter your text here.}
 
 % Remove following line for the final thesis.
 \input{intro.tex} % A short introduction to LaTeX.
