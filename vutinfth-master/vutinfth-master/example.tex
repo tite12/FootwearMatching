@@ -50,11 +50,11 @@
 % Set persons with 4 arguments:
 %  {title before name}{name}{title after name}{gender}
 %  where both titles are optional (i.e. can be given as empty brackets {}).
-\setauthor{}{\authorname}{Bsc}{female}
+\setauthor{}{\authorname}{Bsc}{male}
 \setadvisor{Ao.Univ.Prof. Dipl.-Ing. Dr.techn.}{Robert  Sablatnig}{}{male}
 
 % For bachelor and master theses:
-\setfirstassistant{Dipl.-Ing.}{Manuel  Keglevic}{}{male}
+\setfirstassistant{Proj.-Ass. Dipl.-Ing.}{Manuel  Keglevic}{}{male}
 %\setsecondassistant{Pretitle}{Forename Surname}{Posttitle}{male}
 %\setthirdassistant{Pretitle}{Forename Surname}{Posttitle}{male}
 
@@ -259,6 +259,209 @@ In Chapter 6 experimental results are shown and the proposed algorithm is evalua
 In Chapters 7 and 8 prospective future work is discussed and the final conclusion is given. 
 
 \chapter{Related Work}
+\par
+In order to find and develop an effective algorithm for shoeprint enhancement an overview about relevant research has to be made first.
+Along  the evident litrtiture of image enhancement other related topic such as discriminative image descriptors and feature classification are also considered, to gain the best insight possible and to be able to develop an algorithm which is optimized for the whole rest of the shoeprint identification pipeline.
+In this chapter the research on the domain of shoeprint identification is reviewed.
+Other than that publications from similar domains such as fingerprint and palmprint detection as well as tattoo identification are described.
+The related domains fingerprint identification and tatto recognition have been choosen for review because of their similar goal of edge structure and minimal image structure recognition.
+Moreover an overview of techniques from the field of natural image enhancement and description along with general image denoising is also given.
+This chapter is separated into four parts, first Image Enhancement techniques are described, after that algorithms developed for Noise Removal specifically are discussed.
+In the second half of the chapter proposed methods Image Descriptors and lastly for Featuree Classifications are reviewd
+
+\section{Image Enhancement}
+\label{sec:rw:ImageENhancement}
+
+In this section image enhancement tecniques from four specific domains are discussed, these are shoe- and fingerprint identification, tattoo recognition and natural image enhancement.
+
+\section*{Shoeprint Enhnacement}
+
+\par
+There is an extensive research done in the field of enhancing shoeprint images.
+However, it has to be noticed that the problem definition and the use-case of the different publications varys.
+Becuse of the absence of standrad database, the discussed algorithms can be separated into two groups, techniques tested on synthetic samples and on real-life impressions.
+Synthetic samples are images scanned in images in a laboratorial enviroment for the purpose of building a dataset for shoeprint identification.
+The noise derives from scanning artifacts and computationally added distortions and modification.
+Furthermore many algorithms developed for real crime-scene data make restrictions about the input image and exclude noisy and poor quality images.
+Figure \ref{fig:rw:database} shows example images from a synthetic \ref{fig:rw:synthetic}, from a restricted \ref{fig:rw:restricted} and high \ref{fig:rw:highFID} and low quality samples \ref{fig:rw:lowFID} from the FID-300 dataset.
+In the following discussion it is noticed repeatedly, which kind of dataset the proposed approach was tested on.
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{2/synthetic.jpg}
+    \subcaption{Example image from a synthetic dataset}
+    \label{fig:rw:synthetic}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{2/restricted.jpg}
+    \subcaption{Example image from a real crimescene dataset exluding low quality images}
+    \label{fig:rw:restricted}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{2/00025.jpg}
+    \subcaption{Example high quality image from the FID-300 database}
+    \label{fig:rw:highFID}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{2/00174.jpg}
+    \subcaption{Example low quality image from the FID-300 database}
+    \label{fig:rw:lowFID}
+  \end{subfigure}
+  \caption{Example images of a synthetic \cite{alizadeh2017automatic}, of a restricted \cite{li2014retrieval} and of the FID-300 \cite{kortylewski2014unsupervised} dataset}
+  \label{fig:rw:database}
+\end{figure}
+
+\par
+Morphological Operations, Thresholding and Image Filtering are popular techniques for improve the quality of both kind, realistic and synthetic, of input data.
+Morphological operations, especially Opening and Closing, is used in many cases \cite{wang2014automatic}, \cite{kong2014novel}
+, \cite{li2014retrieval}, \cite{tang2010footwear}, \cite{wu2019crime}, whereas Wang et al. \cite{wang2014automatic} uses a synthetic dataset, and other than Wu et al. \cite{wu2019crime} the forensic images are restricted to high quality data.
+ Wang et al. \cite{wang2014automatic}, Kong et al.  \cite{kong2014novel} and Li et al. \cite{li2014retrieval} use the Morphological Operations to correct inconsistencies after thresholding.
+Similar to the previous approaches Wu et al. \cite{wu2019crime} applies the same pipeline on a real forensic dataset.
+Tang et al. \cite{tang2010footwear} follow the same principle but instead of thresholding, after Canny edge detection is Opening and Closing used.
+\par
+To create a binary image and eliminate noise various thresholding techniques are used.
+Otsu  \cite{wu2019crime}, \cite{algarni2008novel}, \cite{alizadeh2017automatic}, \cite{kong2014novel} and adaptive thresholding \cite{wang2014automatic}, \cite{li2014retrieval} are the two most popular algorithms.
+Algarni et al. \cite{algarni2008novel} and Alizedah et al. \cite{alizadeh2017automatic} along with Wang et al. \cite{wang2014automatic} published their algorithms for synthetic datasets.
+Kong et al. \cite{kong2014novel} and Li et al. \cite{li2014retrieval} tested on restricted, whereas Wu et al. \cite{wu2019crime} developed their approach for full real forensic database.
+Wang et al. \cite{wang2014automatic} and Wu et al. \cite{wu2019crime} combine thresholding with a grid based approach to calculate exact thresholds for every subarea of the picture.
+\par
+An other way to eliminate noise is image filtering.
+Alizadeh et al. \cite{alizadeh2017automatic} uses a simple Median filter on a synthetic dataset.
+Zhang et al. \cite{zhang2005automatic} test on synthetic database as well.
+They take advantage on the partial different equations approach.
+In this way the edges are preserved while the background is smoothed according to a controlled curvature motion criteria. 
+Katireddy et al. \cite{katireddy2017novel} uses Successive Mean Quantization Transfrom (SMQT) \cite{nilsson2013smqt} as an only step to ehnace a real-life database.
+Figure \ref{fig:rw:SMQT} shows the output of the SMQT algorithm on an example image.
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{2/SMQTorig.jpg}
+    \subcaption{Example shoeprint impression}
+    \label{fig:rw:SMQTin}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{2/SMQT.jpg}
+    \subcaption{Enhanced image with the SMQT algorithm}
+    \label{fig:rw:SMQTout}
+  \end{subfigure}
+  \caption{Example image about the enhancement feature of the SMQT algorithm \cite{katireddy2017novel} }
+  \label{fig:rw:SMQT} % \label has to be placed AFTER \caption (or \subcaption) to produce correct cross-references.
+\end{figure}
+
+\par
+Bandpass operators are also used for noise supression.
+The images are converted to the frequency domain where high and low frequencies are eliminated.
+Gueham et al. \cite{gueham2007automatic} and Richetelli et al. \cite{richetelli2017classification} utilize this method on a synthetic database.
+Li et al. \cite{li2014retrieval} work with a restricted real dataset, where only the lower frequencies are eliminated.
+
+\section*{Fingerprint Enhnacement}
+
+Bandpass and general image filtering is popular in the field of fingerprint enhancement as well.
+Zhou et al. \cite{zhou2011adaptive} uses a low- and a highpass filter to eliminate striking frequencies. 
+Wang et al. \cite{wang2014enhanced} decompose the image into four subbands and process them separately, calculating the noise for every subband respectively.
+Li et al. \cite{li2012texture} use Fourier transformation combined with Scale Invariant Feature Transform (SIFT) to enhance the fingerrint images. \todo{reference}
+With SIFT the intresting points in the Fourier domain are found and secured, while the image is filtered to suppress noise and other inconsistencies.
+Jahan et al. \cite{jahan2017robust} apply Fuzzy filtering followed by thinning.
+Fuzzy filter is a local method to preserve the edge information and fine lines structures and supress the noisy background of the input.
+
+\section*{Tattoo Enhnacement}
+
+For tattoo enhancement an algorithm from Han et al. \cite{han2013tattoo} was proposed which combines Gaussian filtering with Hysteresis thresholding. \todo{reference}
+Hysteresis thresholding is a neighborhood-aware approach where a pixel is labelled when it is above a given low threshold and simultaneously connected to other pixels meeting a higher thresholding criteria. \todo{reference}
+Acton et al. \cite{acton2008matching} propose to use an Active Contour Model to find the boundaries of tattoo images and apply Opening and Closing as well to get rid of small inconsistencies.
+
+\section*{Natural Image Enhnacement}
+\par
+Along Signal, especially Bandpass, general Image Filtering and Thresholding Histogram and Color Operations are also common for natural image enhancement.
+Maini et al. \cite{maini2010comprehensive} published a review about natural image enhancing algorithms and defined two main groups of algorithms, Frequency and Spatial Domain Methods.
+First publications utilizing techniques from the first group are discussed, after that the usage of Spatial Domain Methods is reviewed.
+\par
+Xu et al. \cite{xu2016image} combines Bandpass filtering with adaptive thresholding.
+Similar to Wang et al. \cite{wang2014enhanced} the image is separated into four subbands, and the threshold is calculated for every image separately.
+Sugamya et al. \cite{sugamya2016image} applies Subband Decomposition with two staged Histogram Equalization.
+The histogram of the input is equalized gloablly first, after that it is decomposed into subbands to Equalize the values locally for every four generated subimage.
+\par
+Median Fiters are used for noise suppression no only in the domain of shoeprint enhancement \cite{alizadeh2017automatic} but also for natural image processing.
+Apart from Median Filter Li et al. \cite{li2014rapid} utilize Average and Wiener Filter as well to suppress the occuring noise and to prepare the input for neighborhood based feature extraction.
+Feng et al. \cite{feng2011bag} proposed a Bag-of-Words algorithm based on the Gabor wavelets of the input. 
+For preprocessing the Watershed Transform is used.
+\par
+Histogram Operations can be combined with not only Bandpass filtering as Sugamya et al. \cite{sugamya2016image} do but also with Thresholding as proposed by Yao et al. \cite{yao2016image}.
+Their aprroach separates the histogram of the input into two parts according to Otsu\'s method.
+After that the histogram is equalized of the generated subimages.
+Figure \ref{fig:rw:BHNMT} shows the results of algorithm on an example image.
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{2/SMQTorig.jpg}
+    \subcaption{Example low-contrast image}
+    \label{fig:rw:BHNMTin}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{2/SMQT.jpg}
+    \subcaption{Enhanced image with the histogram thresholding algorithm}
+    \label{fig:rw:BHNMTout}
+  \end{subfigure}
+  \caption{Example image  \cite{yao2016image} about the enhancement feature of the algorithm proposed by Yao et al. \cite{yao2016image} }
+  \label{fig:rw:BHNMT} % \label has to be placed AFTER \caption (or \subcaption) to produce correct cross-references.
+\end{figure}
+
+\par
+Color processing techniques are widespresd in he topic of natural image enhancement.
+It can be used for image dehazing, so for low contrast images, \cite{singh2018dehazing} and also for classical noise removal \cite{ren2018joint}, \cite{zhang2016simultaneous}. 
+Bhairannawar et al. \cite{bhairannawar2017color} switch from RGB to HSV and use Laplace filter to detect regions with intensity changes. 
+During processing the H chanel is not modified to prevent color distortion artifacts.
+Althoug color processing is a well researched field with many promissing solutions, no wider overview is given in this thesis.
+There are shoeprint impression datasets with colored samples, FID-300 provides grayscale images thus no color processing approach can be used in this specific case. 
+
+\section{Noise Removal}
+
+Noise Removal methods are based on estimating the original image, and based on that eliminating the deviating features of the data.
+One way is denoising through gradient histogram preservation \cite{zuo2013texture}.
+The distribution of gradients is estimated on the original image, and the noisy image is adjusted to the calculated values.
+An alternative way is to decompose a single image and based on the clear parts the noisy regions are approximated.
+Huang et al. \cite{huang2013self} propose a self-learning algorithm, which only consideres the high frequency parts of the decomposed image.
+There were several approaches published, where the images is separated is separated spatially instead of in the frequncy domain.
+\cite{xu2015patch}, \cite{talebi2013global}, \cite{chatterjee2011patch} and \cite{guo2015efficient} are tecniques based on the idea of non-local means, where the image is subsampled into tiles and the pixels are set to the mean of regions belongng to the same cluster.
+The main difference between the previous algorithms is how they classify the image subregions into different classes.
+Taleby et al. \cite{talebi2013global} uses an iterative shrinkage strategy. 
+Chatterjee et al.  \cite{chatterjee2011patch} groups the geometrically similar regions and estimate the noise for every class separately with a Wiener Filter.
+Whereas Guo et al. \cite{guo2015efficient} utilize Block Matching to determine the cluster memberships. 
+Additionally the spatial location is also considered while calculating the mean value in a given class.
+The members are weighted according to the distance to the current region.
+
+\section{Image Description}
+
+Similar to the previous Image Enhancement section \ref{sec:rw:ImageENhancement} this part is also subdivided into four domains offering solutions for the same problem in different domains.
+In this section the published image features are described which are proposed to be the most discriminative for their field.
+Shoeprint descriptors are described first, after that fingerprint features are discussed.
+Following that an overview about tattoo and natural image descriptors is given at the end.
+
+\section*{Shoeprint Descriptors}
+\par
+In the research of Shoeprint Identification and more exactly Shoeprint Description the varying difficulty and quality of the different datasets is a continuous issue, therofore the properties of the database the given approach was tested in is noted repeatedly.
+Signal or frequency domain based image features are popular in both groups of algorithms using synthetic or real samples for testing.
+
+
+\section*{Fingerprint Descriptors}
+
+\section*{Tattoo Descriptors}
+
+\section*{Natural Image Descriptors}
+
+
+\section{Classification}
 
 \chapter{Pattern Enhancement}
 
@@ -266,33 +469,33 @@ In Chapters 7 and 8 prospective future work is discussed and the final conclusio
 
 \chapter{Semi-Automated Noise Supression}
 
-\chapter{Results and EValuation}
+\chapter{Results and Evaluation}
 
 \chapter{Future Work}
 
 \chapter{Conclusion}
 
 % Remove following line for the final thesis.
-\input{intro.tex} % A short introduction to LaTeX.
+%\input{intro.tex} % A short introduction to LaTeX.
 
 \backmatter
 
 % Use an optional list of figures.
-\listoffigures % Starred version, i.e., \listoffigures*, removes the toc entry.
+%\listoffigures % Starred version, i.e., \listoffigures*, removes the toc entry.
 
 % Use an optional list of tables.
 \cleardoublepage % Start list of tables on the next empty right hand page.
-\listoftables % Starred version, i.e., \listoftables*, removes the toc entry.
+%\listoftables % Starred version, i.e., \listoftables*, removes the toc entry.
 
 % Use an optional list of alogrithms.
-\listofalgorithms
-\addcontentsline{toc}{chapter}{List of Algorithms}
+%\listofalgorithms
+%\addcontentsline{toc}{chapter}{List of Algorithms}
 
 % Add an index.
-\printindex
+%\printindex
 
 % Add a glossary.
-\printglossaries
+%\printglossaries
 
 % Add a bibliography.
 \bibliographystyle{alpha}
