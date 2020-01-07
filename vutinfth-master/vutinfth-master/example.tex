@@ -361,11 +361,14 @@ Bandpass operators are also used for noise supression.
 The images are converted to the frequency domain where high and low frequencies are eliminated.
 Gueham et al. \cite{gueham2007automatic} and Richetelli et al. \cite{richetelli2017classification} utilize this method on a synthetic database.
 Li et al. \cite{li2014retrieval} work with a restricted real dataset, where only the lower frequencies are eliminated.
+Another frequency based approach was proposed by Katireddy et al. \cite{katireddy2017novel} based on Daubechies wavelets.
+After SMQT enhancement the Daubechies wavelets are used to separate the fore- and background and to remove the noise in the latter.
 
 \section*{Fingerprint Enhnacement}
 
 Bandpass and general image filtering is popular in the field of fingerprint enhancement as well.
 Zhou et al. \cite{zhou2011adaptive} uses a low- and a highpass filter to eliminate striking frequencies. 
+Baig et al. \cite{baig2015enhancement} apply Directional Hilbert transform of a Butterworth andpass to collect the different phase shifts and eliminate the artifacts created by previous thresholding of the input.
 Wang et al. \cite{wang2014enhanced} decompose the image into four subbands and process them separately, calculating the noise for every subband respectively.
 Li et al. \cite{li2012texture} use Fourier transformation combined with Scale Invariant Feature Transform (SIFT) to enhance the fingerrint images. \todo{reference}
 With SIFT the intresting points in the Fourier domain are found and secured, while the image is filtered to suppress noise and other inconsistencies.
@@ -445,21 +448,90 @@ The members are weighted according to the distance to the current region.
 
 Similar to the previous Image Enhancement section \ref{sec:rw:ImageENhancement} this part is also subdivided into four domains offering solutions for the same problem in different domains.
 In this section the published image features are described which are proposed to be the most discriminative for their field.
+Similar topics are reviewd to gain insight about the most powerful descriptors and consider to port them into the domain of this thesis.
 Shoeprint descriptors are described first, after that fingerprint features are discussed.
-Following that an overview about tattoo and natural image descriptors is given at the end.
+Following that an overview about tattoo and natural texture descriptors is given at the end.
 
 \section*{Shoeprint Descriptors}
 \par
-In the research of Shoeprint Identification and more exactly Shoeprint Description the varying difficulty and quality of the different datasets is a continuous issue, therofore the properties of the database the given approach was tested in is noted repeatedly.
+In the research of Shoeprint Identification and more exactly Shoeprint Description the varying difficulty and quality of the different datasets is a continuous issue, therofore the properties of the database the given approach was tested on is noted repeatedly.
 Signal or frequency domain based image features are popular in both groups of algorithms using synthetic or real samples for testing.
-
+Gabor Transform is used in several applications tested on synthetic \cite{patil2009rotation}, on restricted \cite{kong2014novel}, \cite{li2014retrieval} and on real forensic data \cite{wu2019crime} as well.
+Patil et al. \cite{patil2009rotation} propose to use the Radon transfrom to determine the dominant direction of structures on the print and process the aligned image with the Gabor Transform.
+Kong et al.  \cite{kong2014novel} combined the Gabor Feature of the sample with Zernike Features to describe the shapes in the pattern.
+Li et al. \cite{li2014retrieval} suggest to use the histogram extracted in the Gabor Transform domain as descriptors.
+In the approach published by Wu et al.  \cite{wu2019crime} Gabor Filters are combined with Haar Wavelets and Fourier-Mellin Transform to get an integratet, multi-level descriptor. 
+There are other publications along with  Wu et al.  \cite{wu2019crime} where Fourier-Mellin Transfrom is proposed for feature description.
+Gueham et al. \cite{gueham2008automatic} use the classical Fourier-Mellin pipeline to compare samples from a synthetic dataset.
+As Wang et al. \cite{wang2014automatic} state, Fourier-Mellin transform allow multi resolution matching, so they apply it successfully on synthetic data.
+Richetelli et al. \cite{richetelli2017classification} classify synthetic shoeprint impressions by applying Fourier-Mellin transform following the calculation of Phase Only Correlation (POC) to determine the translative difference between two images in the frequency domain.
+Gueham et al. \cite{gueham2007automatic} in an other paper suggest to use the basic Fourier transfrom before calculating the POC.
+Unlike the approach of Gueham et al. \cite{gueham2007automatic}, which were only tested on synthetic images, Kortylewsky et al. \cite{kortylewski2014unsupervised} propose a Fourier Transformation based method for real forensic images.
+It is an unsupervised learning approach, where the periodic structuren on a shoeprint are compared in the Fourier domain.
+Richetelli et al. \cite{richetelli2017quantitative} compares Randomly Acquired Characteristics of shoeprints, e.g. small demages, modifications and stuck objects on or in the shoesole pattern, examining their Fourier descriptor.
+Othet than Fourierlike tarnsformations the use of Power Spectral Density was also proposed for a restricted dataset \cite{dardi2009texture}.
+It is a descriptor for random, broadbrand signals based on the frequency and power.
+\par
+In high quality datasets shape descriptors are a popular choice for feature extraction.
+Algarni et al. \cite{algarni2008novel} suggest to use Hu moments because of its robustness against noise, rotation and resolution.
+For restricted databases it is proposed to combine the feature descriptors, Kong et al. \cite{kong2014novel} incorporate Zernike and Gabor features whereas Tang et al. \cite{tang2010footwear} define their own fundamental shapes based on common basic structures on a shoesole through Hough Line Transfrom.
+The extracted features are then stored in an Attributed Relational Graph to represent the entire shoeprint image.
+\par
+SIFT and Harris Detector are the two most popular point descriptors for matching shoeprint images.
+Nibouce et al. \cite{nibouche2009rotation} propose to use a four-level Harris and combine with SIFT on a synthetic database.
+Almaadeed et al. \cite{almaadeed2015partial} use the same combination and the Hessian Detector additionally for the same purpose on a restricted real-life dataset.
+Another publication \cite{richetelli2017classification} extract the SIFT features from the frequency domain after applying Fourier-Mellin Transformation and POC on the input image.
+\par
+Kong et al. \cite{kong2017cross}, \cite{kong2019cross} define a new descriptor for real database extracting the mid-level features from a Convolutional Neural Network.
+Wu et al .\cite{wu2019losgsr} also use machine learning to calculate opinion scores for given matching pairs from real forensic data.
+In the learning process manifold ranking is used where he opinions of humanexperts as well as feature similarities are both incorporated.
+Kortylewsky et al. \cite{kortylewski2016probabilistic} developed hieararchical composition for Active Basis Models for the same real database, FID-300, as used in this thesis, and also extended for natural image enviroments \cite{kortylewski2019greedy}.
+Sparse representation was also proposed \cite{alizadeh2017automatic} this method however was only tested on synthetic data and not on real forensic dataset.
 
 \section*{Fingerprint Descriptors}
+\par
+Signal domain representations, because of their robustness against rotation, are attractive not only for shoeprint but also for fingerprint description.
+Multi-resolution representation through Gabor expansion was proposed by Bolle t al. \cite{bolle2012fingerprint} to get a localized texture descriptor.
+Van et al. \cite{van2016fingerprint} use Adaptively Adjusted Modified Finite Radon Transform after Gabor filtering to connect edges and eliminate inconsistencies.
+Rida et al. \cite{rida2018palmprint} propose an ensambe descriptor consisting of Gabor filter, Local Binary Pattern, Histogram of Orinted Gradient (HOG) and Line detector to represent a palmprint impression.
+Other than that Li et al. \cite{li2012texture} suggest to use Directional Filter Banks along, where the image is separated into eight directions and every subimage is decomposed into two frequencies vie wavelet transform.
+\par
+Unlike in the domain of shoeprint image representation, in case of fingerprint images several point feature descriptors were proposed.
+In \cite{zhou2011adaptive} SIFT features were fused with Hough Transform and Minutiae Information of the fingerprint.
+Chen et al. \cite{chen2013hierarchical} also use the Hough Transform and extends with hierarchical voting score to get better matchin information.
+Along  \cite{rida2018palmprint} Ghandehari et al. \cite{ghandehari2012palmprint} recommend to use HOG in a 3-level Gaussian pyramid to estimate the local strength of different kind of edges on the image.
+Jahan et al. \cite{jahan2017robust} suggest to combine the Minituae Information with Speeded Up Robust Features and compare them with a neural network to find the matching pairs.
+\par
+For fingerprint description Local Binary Patterns (LBP) are also suitable.
+As mentioned previously Rida et al. \cite{rida2018palmprint} published a combined feature vector which LBP is also a part of.
+Wang et al. \cite{wang2013pixel} modify the ususal LBP pipeline with Pixel to Patch sampling to increase the quality of descriptor without slowing down the calculation.
+In Pixel to Patch sampling the weighted average of the neighboring pixels in a given radius is calculated instead of interpolation.
+Additionally the Local Neighboring Intensity Relationships based on gray-scale information are also considered.
+\par
+Sparse representations are popular also for fingerprint description.
+Rida et al. \cite{rida2018palmprint} stores the hybrid features in that way, whereas Shao et al. \cite{shao2013fingerprint} represents predefined fingerprint patches, called dictionary atoms, in a sparse way.
 
 \section*{Tattoo Descriptors}
+\par
+For tattoo description three main methods were introduced, signal omain features, point descriptor especially SIFT and shape features and Kim et al. \cite{kim2015robust} fuses alls three of them.
+For local descriptor the shape context features are used whereas for global descriptor multi-level SIFT and the Fourier Transform is used.
+Acton et al. \cite{acton2008matching} build an Active Contour Model which consists of a haar wavelet an HSV histogram and a Fourier Shape Descriptor,
+\par
+Other than  \cite{kim2015robust} there are multiple publications available, e.g. \cite{duangphasuk2013tattoo}, which take advantage on SIFT features for tatoo image description.
+It is common to combine them with other shape descriptor to have a more detailed representation.
+Han et al. \cite{han2013tattoo} fuse Active Shape Models with SIFT,  in \cite{yi2015impact} SURF is added and in \cite{kim2016tattoo} SIFT is extended with the Local Self Similarity measure.
+Duangphasuk et al. \cite{duangphasuk2013tattoo} base their approach mainly on shape description and similar to  \cite{kim2015robust} use shape context features for tattoo representation.
 
-\section*{Natural Image Descriptors}
-
+\section*{Natural Texture Descriptors}
+\par
+For natural texture description signal domain features and LBPs are frequently used.
+Mistry et al. \cite{mistry2017content} mix multiple features, mainly color and texture descriptors.
+For texture description Gabor wavelet and Binarized Statistical Images  \cite{kannala2012bsif} are used simultenously.
+Hatipoglu et al. \cite{hatipoglu2000image} suggest to take advantage on dual tree complex wavelet transform instead of Gabor wavelet.
+Quevedo et al. \cite{quevedo2002description} and Xu et al. \cite{xu2009viewpoint} propose to use Fractal features, because they are invariant to intensity and scale changes.
+Xu et al. \cite{xu2009viewpoint} propose to use multifractal spectrum to achive robustness against vievpoint changes and non-rigid deformations additionally.
+Hayati et al. \cite{hayati2018wirif} and Ahonen et al. \cite{ahonen2009rotation} follow the same principle by incorporating LBP-like features whith the frequency domain representation.
+Ahonen et al. \cite{ahonen2009rotation} calculate the LBP of the Fourier features of the image, whereas Hayati et al. \cite{hayati2018wirif} se wave inference, where the neighborhood information of multiple different-sized asymetric neighborhoods is added respectively. 
 
 \section{Classification}
 
