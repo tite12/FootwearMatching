@@ -261,7 +261,7 @@ In Chapters 7 and 8 prospective future work is discussed and the final conclusio
 \chapter{Related Work}
 \par
 In order to find and develop an effective algorithm for shoeprint enhancement an overview about relevant research has to be made first.
-Along  the evident litrtiture of image enhancement other related topic such as discriminative image descriptors and feature classification are also considered, to gain the best insight possible and to be able to develop an algorithm which is optimized for the whole rest of the shoeprint identification pipeline.
+Along the evident litrtiture of image enhancement and noise removal a further, related topic discriminative image descriptors are also considered, to gain the best insight possible and to be able to develop an algorithm which is optimized for the rest of the shoeprint identification pipeline.
 In this chapter the research on the domain of shoeprint identification is reviewed.
 Other than that publications from similar domains such as fingerprint and palmprint detection as well as tattoo identification are described.
 The related domains fingerprint identification and tatto recognition have been choosen for review because of their similar goal of edge structure and minimal image structure recognition.
@@ -406,13 +406,13 @@ Figure \ref{fig:rw:BHNMT} shows the results of algorithm on an example image.
   \centering
   \begin{subfigure}[b]{0.4\columnwidth}
     \centering
-    \includegraphics[width=\textwidth]{2/SMQTorig.jpg}
+    \includegraphics[width=\textwidth]{2/BHNMTorig.jpg}
     \subcaption{Example low-contrast image}
     \label{fig:rw:BHNMTin}
   \end{subfigure}
   \begin{subfigure}[b]{0.4\columnwidth}
     \centering
-    \includegraphics[width=\textwidth]{2/SMQT.jpg}
+    \includegraphics[width=\textwidth]{2/BHNMT.jpg}
     \subcaption{Enhanced image with the histogram thresholding algorithm}
     \label{fig:rw:BHNMTout}
   \end{subfigure}
@@ -491,7 +491,7 @@ Sparse representation was also proposed \cite{alizadeh2017automatic} this method
 \section*{Fingerprint Descriptors}
 \par
 Signal domain representations, because of their robustness against rotation, are attractive not only for shoeprint but also for fingerprint description.
-Multi-resolution representation through Gabor expansion was proposed by Bolle t al. \cite{bolle2012fingerprint} to get a localized texture descriptor.
+Multi-resolution representation through Gabor expansion was proposed by Bolle et al. \cite{bolle2012fingerprint} to get a localized texture descriptor.
 Van et al. \cite{van2016fingerprint} use Adaptively Adjusted Modified Finite Radon Transform after Gabor filtering to connect edges and eliminate inconsistencies.
 Rida et al. \cite{rida2018palmprint} propose an ensambe descriptor consisting of Gabor filter, Local Binary Pattern, Histogram of Orinted Gradient (HOG) and Line detector to represent a palmprint impression.
 Other than that Li et al. \cite{li2012texture} suggest to use Directional Filter Banks along, where the image is separated into eight directions and every subimage is decomposed into two frequencies vie wavelet transform.
@@ -532,8 +532,32 @@ Quevedo et al. \cite{quevedo2002description} and Xu et al. \cite{xu2009viewpoint
 Xu et al. \cite{xu2009viewpoint} propose to use multifractal spectrum to achive robustness against vievpoint changes and non-rigid deformations additionally.
 Hayati et al. \cite{hayati2018wirif} and Ahonen et al. \cite{ahonen2009rotation} follow the same principle by incorporating LBP-like features whith the frequency domain representation.
 Ahonen et al. \cite{ahonen2009rotation} calculate the LBP of the Fourier features of the image, whereas Hayati et al. \cite{hayati2018wirif} se wave inference, where the neighborhood information of multiple different-sized asymetric neighborhoods is added respectively. 
-
-\section{Classification}
+\par
+There are several publications available which use LBPs for texture description, e.g. \cite{guo2012discriminative}, \cite{hong2014combining}, \cite{ahonen2009rotation}, or for texture classification, e.g. \cite{khellah2011texture}, \cite{guo2010rotation}, \cite{zhang2017learning}.
+It is common however, that LBP is used combined with other techniques to create a discriminative and detailed descriptor.
+In \cite{hong2014combining} based on the covariance matrix additional discriminative features are calculated. 
+As mentioned previously Ahonen et al. \cite{ahonen2009rotation} use the LBP features of the Fourier domain, similarly in \cite{guo2010completed} LBP features are calculated twice after the input is separated into two components into signs and magnitudes to make the basic LBP rotation invariant as well.
+Whereas Zhang et al.  \cite{zhang2017learning} propose a learning strategy for adaptively weighting the sign and magnitude LBPs to estimate their contribution in the given area. 
+A third modified LBP is also defined, where the local difference vector is determined, in this way robustness against illumination changes can be achived.
+In \cite{khellah2011texture} LBP is calculated on multiple levels.
+Another solution for rotation invariance is proposed by Davarzany et al. \cite{davarzani2015scale}, in their approach a circular neighboring radius and dominant orientation is stored additionally, so that scale invariance is also granted.
+Li et al. \cite{li2014rapid} process the neighborhood with Rapid Transform, which is robust against cyclic permutation, to achive the same invariance.
+Wang et al. \cite{wang2017local} suggest to solve this problem by storing the radial and tangential information instead of intensity values.
+Guo et al. \cite{guo2010rotation} defines LBPV instead of LBP where V stands for variance.
+In their approach only the LBP features with high variance are chosen as discriminative features, because the indicate high frequency in the related region.
+In \cite{bala2016local} it is proposed to calculate Local Texton Patterns, where Value chanel of the HSV input is subdivided into overlapping subblocks accordingt to its content.
+The modified LBP is then determined based on those subregions.
+Fadaei et al. \cite{fadaei2017local} published a similar approach called local derivative radial patterns.
+Instead of binary coding a multi-level coding is used in different directions, where the differences between neighbors are weighted additionally.
+Chahi et al. \cite{chahi2018local} define Local Ternary Patterns which store the directional patterns explicitely.
+\par
+In \cite{kannala2012bsif} a new LBP similar descriptor is defined called Binary Statistical Image Feature (BSIF) which is also proposed to use by Crossier et al. \cite{crosier2010using}.
+In BSIF prelearned filters are used and the responses are stored in the feature, it can handle large inntra-class variation when used for classification, however it grately varys when the scale cahnges.
+For that reason Crossier et al. \cite{crosier2010using} suggest to alculate the features on multiple resolution to gain scale invariancy as well.
+\par
+Varied Local Edge Pattern Descriptors (VLEP) \cite{yan2016edge} are used to represent edge information.
+Every pixel of an edge is described by the angle and the magnitude of the gradient which stand for edge direction and strength respectively.
+Wang et al. \cite{wang2018using} develop the feature to be scale invariant by combining two or more modified VLEPs one calculated on a different scale and another calculated on different scale and different resolution.
 
 \chapter{Pattern Enhancement}
 
