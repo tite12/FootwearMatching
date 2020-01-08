@@ -560,10 +560,116 @@ Every pixel of an edge is described by the angle and the magnitude of the gradie
 Wang et al. \cite{wang2018using} develop the feature to be scale invariant by combining two or more modified VLEPs one calculated on a different scale and another calculated on different scale and different resolution.
 
 \chapter{Pattern Enhancement}
+\par
+In this and in the following two chapter three different approaches are introduced and discussed if they are usable for enhancement of real-life footwear impression.
+As mentioned earlier the testing data of already published algorithms varys greatly, thus it is difficult to make an estimation about their performance on the FID-300  \cite{kortylewski2014unsupervised} dataset.
+For that reason three prototypical application are developed and evaluated in this thesis, and the one with most promissing results is further elaborated.
+The goal of these three chapters is to give an overview about possible directions of development and to provide information about the effectiveness of the given techniques and approaches on a real-life forensic dataset.
+\par
+There are two ways to increase the quality of a given input, find and enhnace the information regardless the properties and presence of noise or suppress or eliminate the noise preserving the information.
+In this chapter an experimental application for the first possibility is introduced, in Chapter 4 and Chapter 5 two approaches for noise suppression are discussed.
+
+\section{Methodology}
+\par
+To be able to find the shoeprint pattern in any input regardless the noise a robust and discriminative descriptor is needed.
+Since the noise and other inference is highly variable in real-life settings the impressions from the same shoe can greatly differ depending on the circumstances causing high intra-class variance.
+On Figure \ref{fig:pe:database} four samples from the same shoeprint are shown, noise occurs not only in the backround but also on the shoeprint itself, the appearance of noise changes within one image and illumination changes occur as well.
+Furthermore on three examples only a partial shoeprint is depicted and the size and resolution of the samples also varys.
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00009.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00020.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00021.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00066.jpg}
+  \end{subfigure}
+  \caption{Example impressions of the same shoe from the FID-300 \cite{kortylewski2014unsupervised} dataset}
+  \label{fig:pe:database}
+\end{figure}
+
+\par
+For that reason a discriminative feature learning algorithm is proposed based on the work of Guo et al. \cite{guo2012discriminative}.
+In their work a three-layered Local Binary Pattern (LBP) feature learning algorithm is introduced for natural texture description, a schematic flow f the algorithm is shown on Figure \ref{fig:pe:workflow}
+They utilize on feature selection where only the most discrimanitve descriptors are selected and propagated further.
+In the first layer, where robustness is granted, the features which describe the majority of given texture are selected, by finding the frequently appearing features and ignoring the rare ones since they are more sensitive to noise.
+For that a threshold is defined, all descriptors of the given texture are ordered by their frequency and selected in this order starting with the most frequent one.
+If the already selected descriptors cover a bigger region of the original texture than the given threshold, the selection process stops and the chosen descriptors are proagated for the next level.
+The selection of threshold is crucial in this process, if it is too high less robust descriptors with low frequency are also selected, when the threshold is too low, only the most frequent descriptors are considered and valuable details of the texture are ignored.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{3/workflow.jpg}
+  \caption{The workflow of the three-layered feature learning algorithm  \cite{guo2012discriminative}.}
+  \label{fig:pe:workflow} % \label has to be placed AFTER \caption (or \subcaption) to produce correct cross-references.
+\end{figure}
+
+\par
+The following two layers work according to Fisher\'s Separation Criteria, the second layer aims to minimize intra-class variance, whereas the third layer ensures maximum intra-class distance. 
+The second layer provides discriminative power.
+It gathers all selected descriptors from the previous layer of the same texture on different samples and intersects those sets.
+The main assumption is that the same texture have similar properties under varying circumstances.
+In this layer only the features are selected which occur in every sample of the given texture.
+\par
+In the last, third layer representation capability is ensured.
+This layer merges all remaining features from the second layer into one set to create a dominant feature pool.
+In the second layer a feature set for a given texture is created based on the extracted descriptors from all samples of the same texture, in the third layer those feature sets of every occuring textures are gathered and united.
+\par
+For the purpose of this prototypical implementation only the first two layer is used because the goal is to distinguish between noise and information.
+The primary assumption is that there is a fundamental similarity between every shoeprint image, e.g. regualar line structures, reoccuring basic patterns, which can be detected and learned.
+Guo et al. \cite{guo2012discriminative} proposed their algorithm for LBP features, and since it is popular descriptor for natural textures \cite{hong2014combining}, \cite{ahonen2009rotation} and fingerprints \cite{wang2013pixel}, \cite{rida2018palmprint}, LBP is chosen to be a candidate descriptor for shoeprint detection.
+In the research of shoeprint identification both frequency based feture descriptors, such as Fourier-Mellin Transform \cite{wu2019crime}, \cite{gueham2008automatic}, and SIFT \cite{nibouche2009rotation}, \cite{richetelli2017classification} are commonly used descriptors, thus those are also selected for feature learning.
+\par
+The three-layered learning algorithm is implemented for three different feature descriptors, LBP, Fourier-Mellin and SIFT, but the learning process follows the same steps as proposed by Guo et al. \cite{guo2012discriminative}.
+In the first layer Guo et al. \cite{guo2012discriminative} propose a threshold based on the area the selected features cover on the original image.
+However this criteria is altered in the case of LBP and SIFT to adjust the learning algorithm to the needs of this research.
+Three-layered learning was developed originally to find a discriminative feature set for several texture images from a wide database, from \cite{ojala2002outex}, \cite{dana1999reflectance}, \cite{boland2001neural}, \cite{jantzen2005pap} and \cite{brahnam2007introduction}, but in this project no such dataset is available.
+Furthermore the goal is to distinguish between noise and soeprint and not to find discriminative features within multiple texture images.
+For that reason features are firstly extracted from both fore- and background of the samples, where the foreground contains the exact shoeprint pattern and the background is the noisy ground where the shoeprint is lying.
+After that frequent descriptors of the noise are determined and all of them are eliminated from the pattern descriptors.
+The remaining pattern descriptors are propagated to the next level. 
+To have a reasonable learning time in case of Fourier-Mellin Transform no such modification is made.
+After all descriptors are calculated those are selecte which occarancy exceed a given thresholds.
+\par
+The easiest way to determine the occurances of one descriptor is to calculate the complete matches within one sample.
+This method however results in high amount of descriptors with little number of occurancies.
+For that reason a similarity measure is used for all three candidate features, if the similarity value reaches a predefined threshold the two descriptors are considered as same, they are merged and the number for occurance is incremented.
+For LBP histogram correlation is used for comparison, for SIFT Brute-Force matcher is applied and for the Fourier-Mellin Transform the similarity measure proposed in \cite{gueham2008automatic} used.
+The correlation coefficient between two Fourier-Mellin descriptors is given by:
+\[ corr(FM_{1},FM_{2}) = \frac{\sum\limits_{m}\sum\limits_{n}(FM_{1mn}-\overline{FM_{1}})(FM_{2mn}-\overline{FM_{2}})}{\sqrt{(\sum\limits_{m}\sum\limits_{n}(FM_{1mn}-\overline{FM_{1}})^2)(\sum\limits_{m}\sum\limits_{n}(FM_{2mn}-\overline{FM_{2}})^2)}}  \]
+where $FM_{1}$ and $FM_{2}$ are two Fourier-Mellin Features to compare and $\overline{FM_{1}}$ and $\overline{FM_{2}}$ are the mean values of the corresponding features.
+
+\section{Implementation}
+In this section implementation details of the modified three-layered learning algorithms are revield and parameter settings are specified.
+This and the following algorithms are written in Python 2.7 \cite{van1995python} using OpenCV 4.1.1 \cite{opencv_library}.
+
+\section{Evaluation}
 
 \chapter{Fully Automated Noise Supression}
 
+\section{Methodology}
+
+\section{Implementation}
+
+\section{Evaluation}
+
 \chapter{Semi-Automated Noise Supression}
+
+\section{Methodology}
+
+\section{Implementation}
+
+\section{Evaluation}
 
 \chapter{Results and Evaluation}
 
