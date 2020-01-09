@@ -128,7 +128,7 @@ The main challange of this task is to correctly filter the pattern regardless th
 Two approaches are examined, pattern enhancement and noise suppression.
 Among fully automated methods, a semi-automated technique is also tested, where user input is required for noise separation.
 \par
-The main goal of this work is to find a universal approach which is able to filter and enhance the shoeprint data even in the presence of noise and the possible low image quality.
+The main goal of this work is to find a universal approach which is able to filter and enhance the shoeprint data despite the presence of noise and the possible low image quality.
 Based on the experiences acquired while investigating the possible techniques a new noise-supression pipeline for shoeprint images is introduced.
 The noisy pixels are identified based on the Fourier-Mellin features of their multi-sized neighborhood.
 In the same time a model is built about the average appearance of noise, to eliminate that structure from the foreground as well.
@@ -175,7 +175,8 @@ Furthermore it is also challanging to estimate which one is applicable in a real
 In this thesis multiple possible enhancing techniques are developed and tested in order to find a method which is able to cope with samples taken from real crime scenes.
 \par
 For evaluation and testing the FID-300 database is used.
-The dataset contains both in a laboratory acquired as well as on a crime secured shoeprint patterns.
+The dataset contains both in a laboratory acquired (synthetic) as well as on a crime secured (real) shoeprint patterns.
+Additionally there is the Ground Thruth available which real sample which synthetic sample belongs to.
 The goal of this work is to define an image processing pipeline which is able to correctly identify and enhance the shoepatterns and eliminate or suppress the noise on the pattern samples regardless the quality of the image.
 A secondary objective is to gain an overview about the algorithms already published, and make an estimation which methods are applicable in real-life scenarios based on their performance on the FID-300 database.
 
@@ -636,10 +637,35 @@ However this criteria is altered in the case of LBP and SIFT to adjust the learn
 Three-layered learning was developed originally to find a discriminative feature set for several texture images from a wide database, from \cite{ojala2002outex}, \cite{dana1999reflectance}, \cite{boland2001neural}, \cite{jantzen2005pap} and \cite{brahnam2007introduction}, but in this project no such dataset is available.
 Furthermore the goal is to distinguish between noise and soeprint and not to find discriminative features within multiple texture images.
 For that reason features are firstly extracted from both fore- and background of the samples, where the foreground contains the exact shoeprint pattern and the background is the noisy ground where the shoeprint is lying.
-After that frequent descriptors of the noise are determined and all of them are eliminated from the pattern descriptors.
+Since there is no labelled data in the FID-300 \cite{kortylewski2014unsupervised} dataset available, the samples chosen for training were labelled manually.
+Figure \ref{fig:pe:mask} shows two example images the black regions of the mask show the shoeprint information whereas the white pixels indicate the background.
+After that, to achive high intra-class distnace despite the absence of the third layer, frequent descriptors of the noise are determined and all of them are eliminated from the pattern descriptors.
 The remaining pattern descriptors are propagated to the next level. 
 To have a reasonable learning time in case of Fourier-Mellin Transform no such modification is made.
 After all descriptors are calculated those are selecte which occarancy exceed a given thresholds.
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00009.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00009_mask.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00025.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00025_mask.jpg}
+  \end{subfigure}
+  \caption{Examples from FID-300 \cite{kortylewski2014unsupervised} dataset chosen for three-layered learning and their corresponding manually labelled masks.}
+  \label{fig:pe:mask}
+\end{figure}
+
 \par
 The easiest way to determine the occurances of one descriptor is to calculate the complete matches within one sample.
 This method however results in high amount of descriptors with little number of occurancies.
@@ -648,12 +674,203 @@ For LBP histogram correlation is used for comparison, for SIFT Brute-Force match
 The correlation coefficient between two Fourier-Mellin descriptors is given by:
 \[ corr(FM_{1},FM_{2}) = \frac{\sum\limits_{m}\sum\limits_{n}(FM_{1mn}-\overline{FM_{1}})(FM_{2mn}-\overline{FM_{2}})}{\sqrt{(\sum\limits_{m}\sum\limits_{n}(FM_{1mn}-\overline{FM_{1}})^2)(\sum\limits_{m}\sum\limits_{n}(FM_{2mn}-\overline{FM_{2}})^2)}}  \]
 where $FM_{1}$ and $FM_{2}$ are two Fourier-Mellin Features to compare and $\overline{FM_{1}}$ and $\overline{FM_{2}}$ are the mean values of the corresponding features.
+\par
+At the end of the learning process a descriptor pool is created.
+The shoeprint area of a new input is determined based on those learnt feature using the same similarity measures as in the learning phase.
 
 \section{Implementation}
+\par
 In this section implementation details of the modified three-layered learning algorithms are revield and parameter settings are specified.
 This and the following algorithms are written in Python 2.7 \cite{van1995python} using OpenCV 4.1.1 \cite{opencv_library}.
+The values of the variables stated in this section are determined through experiments.
+\par
+When starting the application the training data is read.
+It consists of the original shoeprint images and a mask image where the relevant regions of the corresponding shoeprint is marked.]
+The two set of images are stored in a vector, it is assumed that the mask has the exact same size as the corresponding shoeprint image, that every image has a mask and that the images and masks are stored in the same order.
+For training a limited amount of seven images were selected and labelled manually.
+The FID-300 \cite{kortylewski2014unsupervised} dataset consists of 300 real-life forensic samples and 1175 synthetic samples, thus not every synthetic sample has a real pair, and the majority of synthetic images with corresponding real samples have only one or two matching pairs in the database.
+The chosen seven images depict shoeprint images from the same shoe, one of them is a synthetic sample the rest of them is a real one.
+\par
+To speed up the shoeprint recognition, the learnt features are stored in a \texttt{.txt} file.
+It is determined if a new learning process starts or the already determined descriptors are read from file.
+When the learning starts the descriptors for all pixels are calculated.
+For the Fourier-Mellin calculation the images are extended by mirroring the edges to have a uniform-sized (5x5) descriptor in all cases.
+For LBP features two different settings are considered, one with radius of 3 and 12 sample points and one with radius of 5 and 24 sample points.
+After that similar descriptors are merged and their frequency is calculated.
+If the histogram correlation of two LBP features is higher than 90\%, if the distance between two SIFT features is lower than 300 and if the correlation between two Fourier-Mellin features is higher than 1.4 the two descriptors are combined.
+After that the most frequent noise descriptors are determined, occuring at least 100 times among LBP and at least 10 times among SIFT features.
+All LBP and SIFT descriptors are eliminated which have higher than 90\% correlation with and smaller than 250 distance to any dominant noise descriptor.
+The remaining features are then propagated to the next layer.
+In case of Fourier-Mellin Transform all descriptors are selected which occur at least 10 times on the given pattern.
+\par
+In the sceond layer the dominant descriptors of multiple samples are compared.
+If there is a feature in every training images with a high enough similarity the feature is chosen and added to the final descriptor pool.
+If the correlation between two LBP decsriptor is higher that 90\%, the distance between two SIFT features is smaller than 450 and the correlation between two Fourier-Mellin features is higher than 1.4, the feature is chosen and added to the final set of descriptor.
+At the end of this process the whole set of descriptor is written into file.
+\par
+If the learned descriptors are available the input image is processed.
+The descriptors of the input image are determined similarly as in the training phase.
+For every pixel of the input is a descriptor calculated, in case of Fourier-Mellin transform the borders of the input are extended by mirroring.
+The output image is calculated by comparing the descriptors of the input with the ones in the descriptor pool.
+In case of LBP and Fourier-Mellin features the correlation value is simply written into the resulting image which is normalized in the end of calculation.
+The result image of the SIFT feature comparison is binary, it is set to one if the descriptor of the corresponding pixel has a smaller distance than 200 to any descriptor from the learned set.
+At the end of the application the resulting images are saved.
 
 \section{Evaluation}
+\par
+In this section the results of the modified three-layered learning algorithm are presented and discussed.
+Furthermore it is examined, if this approach can be used for real shoeprint identification algorithms.
+\par
+Two kind of experiments were conducted to test the performance of the learned descriptors.
+First images from training data are evaluated to see how many descriptors from the original image were eliminated and to see the common featuers in the training dataset.
+After that new images are set as input to examine if the features learned on one kind of data are able to describe other kind of shoeprint as well.
+Figure \ref{fig:pe:25} and Figure \ref{fig:pe:66} are example images from the first scenario, since Figure \ref{fig:pe:25:orig} and Figure \ref{fig:pe:66:orig} are part of the training set.
+The visible difference between Figure \ref{fig:pe:25:LBPs} and Figure \ref{fig:pe:25:LBPb} as well as between Figure \ref{fig:pe:66:LBPs} and Figure \ref{fig:pe:66:LBPb} shows that bigger radius is a better choice for shoeprint description.
+Considering the middle region of Figure \ref{fig:pe:25}, the background on Figure \ref{fig:pe:25:LBPb} is less noisy than on Figure \ref{fig:pe:25:LBPs}.
+This difference is more outstanding on  Figure \ref{fig:pe:66} where on Figure \ref{fig:pe:66:LBPs} no shoeprint can be recognized meanwhile on Figure \ref{fig:pe:66:LBPb} outlines of the pattern are visible.
+Still focusing on the middle area of Figure \ref{fig:pe:25}, Figure \ref{fig:pe:25:SIFT} shows that the SIFT descriptor is similarly robust against noise as the LBP descriptor.
+However, examining Figure  \ref{fig:pe:25:FM} the Fourier-Mellin descriptor has more difficulties with the same area, where the background is less homogen than on  Figure \ref{fig:pe:25:LBPb} and on Figure \ref{fig:pe:25:SIFT}.
+On the other hand, inspecting the bottom left side of the shoeprint, it can be seen that the Fourier-Mellin features menaged to find the whole area of pattern, whereas only a few outlines are recognizable on Figure \ref{fig:pe:25:LBPb} and on Figure \ref{fig:pe:25:SIFT}.
+Intrestingly that said region is more recognozable on  \ref{fig:pe:66:LBPs} than on  \ref{fig:pe:66:LBPb}.
+Based on these observations it can be stated that the features less robust against noise are able to find a higher portion of pattern area than those with higher robustness.
+In exchange the background area stays still noisy and further image processing is needed.
+Comparing all results of the two images, Figure \ref{fig:pe:25} and Figure \ref{fig:pe:66}, the performance strongly depends on the input quality.
+On Figure \ref{fig:pe:66} and Figure \ref{fig:pe:66:SIFT} the pattern is less recognizable than on the previous example and a higher amout of background pixels are labeled as pattern.
+On cluttered images Fourier-Mellin features seem to outperform both SIFT and LBP descriptors.
+Overall this testing scenario shows ambivalent results.
+On the one hand on clear samples LBP and SIFT fis able to distinguish between fore- and background correctly, on the other hand, if the input data is cluttered those two descriptors are barely able to recognize the pattern and the Fourier-Mellin descriptor provides the clearest resulst. 
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00025.jpg}
+    \subcaption{Example image from the training set}
+    \label{fig:pe:25:orig}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/LBP/output_00025.jpg}
+    \subcaption{Output using LBP descriptors with radius 3 and 12 sample points}
+    \label{fig:pe:25:LBPs}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/LBP/output_00025_6_24_5.jpg}
+    \subcaption{Output using LBP descriptors with radius 5 and 24 sample points}
+    \label{fig:pe:25:LBPb}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/FM/00025.jpg}
+    \subcaption{Output using Fourier-Mellin Descriptor}
+    \label{fig:pe:25:FM}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/SIFT/00025.jpg}
+    \subcaption{Output using SIFT Descriptor}
+    \label{fig:pe:25:SIFT}
+  \end{subfigure}
+  \caption{Output of the modified three-layered learning algorithm on an image from training set}
+  \label{fig:pe:25}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00066.jpg}
+    \subcaption{Example image from the training set}
+    \label{fig:pe:66:orig}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/LBP/output_00066_4_12_3.jpg}
+    \subcaption{Output using LBP descriptors with radius 3 and 12 sample points}
+    \label{fig:pe:66:LBPs}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/LBP/output_00066_6_24_5.jpg}
+    \subcaption{Output using LBP descriptors with radius 5 and 24 sample points}
+    \label{fig:pe:66:LBPb}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/FM/00066.jpg}
+    \subcaption{Output using Fourier-Mellin Descriptor}
+    \label{fig:pe:66:FM}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/SIFT/00066.jpg}
+    \subcaption{Output using SIFT Descriptor}
+    \label{fig:pe:66:SIFT}
+  \end{subfigure}
+  \caption{Output of the modified three-layered learning algorithm on an image from training set}
+  \label{fig:pe:66}
+\end{figure}
+
+\par
+On Figure \ref{fig:pe:182} the results of the modiefied three-layered learning algorithm on a non-training sample are shown.
+The results displayed on Figure \ref{fig:pe:182:LBPs} and on Figure \ref{fig:pe:182:LBPb} strenghtens the observation, that bigger neighborhood LBP outperforms the smaller radius descriptor.
+Furthermore examining the middle, noisy, part of the images in all three cases a homogenous background can be seen containing some falsely labelled pixels.
+Observing the bottom part of the shoe a weakness of LBP and SIFT already discussed is noticable.
+On the original image there are small structures which are part of the shoeprint.
+Similarly as on the bottom left part of Figure \ref{fig:pe:25} the fine structures are only partially recognized, comparing Figure \ref{fig:pe:182:FM} to Figure \ref{fig:pe:182:LBPb} and to Figure \ref{fig:pe:182:SIFT} Fourier-Mellin outperfoms LBP and SIFT again labelling the whole area correctly.
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/00182.jpg}
+    \subcaption{Input image}
+    \label{fig:pe:182:orig}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/LBP/output_00182_4_12_3.jpg}
+    \subcaption{Output using LBP descriptors with radius 3 and 12 sample points}
+    \label{fig:pe:182:LBPs}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/LBP/output_00182_6_24_5.jpg}
+    \subcaption{Output using LBP descriptors with radius 5 and 24 sample points}
+    \label{fig:pe:182:LBPb}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/FM/00182.jpg}
+    \subcaption{Output using Fourier-Mellin Descriptor}
+    \label{fig:pe:182:FM}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{3/SIFT/00182.jpg}
+    \subcaption{Output using SIFT Descriptor}
+    \label{fig:pe:182:SIFT}
+  \end{subfigure}
+  \caption{Output of the modified three-layered learning algorithm}
+  \label{fig:pe:182}
+\end{figure}
+
+\par
+To summarize LBP and SIFT features seem to be less responsive in the noisy area and have difficulties to find fine patterns while the Fourier-Mellin transform labels bigger parts of the actual shoeprint correctly whereas it more often mistakes the noise as foreground.
+Based on the testing images Fourier-Mellin recognize the shoeprint pixels in nosiy images better than LBP and SIFT.
+A possible solution is to combine all three feature descriptors and propose a weighting score across them, assuming that all three feature sets were able to provied usable results for further processing.
+In ow quality images that is however not necessarily the case.
+Even though Figure \ref{fig:pe:66} was part of the testing dataset, LBP and SIFT was not able to label the pattern correctly.
+That problem can originate from the learning process, where all dominant descriptors of the noise part are eliminated from the pattern descriptors.
+On the other hand on Figure \ref{fig:pe:66:SIFT} significant amount of background is labelled as pattern, which indicates that too many noise descriptors were selected into the descriptors pool.
+Furthermore there are several lower quality samples in the whole dataset available then the one presented on Figure  \ref{fig:pe:66}.
+It has to be emphasized that the descriptors were learned on a small dataset.
+Incorporating more samples and altering the learning criteria, e.g. the given feature has to be found in a given ratio of training images and not on every one of them, can lead to a broader texture pool.
+However, this can also result higher ratio of noise descriptors in the final feature set.
+High noise ratio seems to be a limitation of this algorithm in its current form.
+For that reason noise supression techniques are examined in the following two chapters.
+In the future the three-layered learning algorithm can be further developed and used jointly with noise supression techniques to solve its weakness and to take advante on its possible performance.
 
 \chapter{Fully Automated Noise Supression}
 
@@ -671,7 +888,7 @@ This and the following algorithms are written in Python 2.7 \cite{van1995python}
 
 \section{Evaluation}
 
-\chapter{Results and Evaluation}
+\chapter{Results and Discussion}
 
 \chapter{Future Work}
 
