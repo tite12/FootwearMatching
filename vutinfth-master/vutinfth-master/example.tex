@@ -569,6 +569,7 @@ The goal of these three chapters is to give an overview about possible direction
 \par
 There are two ways to increase the quality of a given input, find and enhnace the information regardless the properties and presence of noise or suppress or eliminate the noise preserving the information.
 In this chapter an experimental application for the first possibility is introduced, in Chapter 4 and Chapter 5 two approaches for noise suppression are discussed.
+The theoretical background and the structure is discussed in the first section, afterwads implementation details are reported followed by the evaluation of the results.
 
 \section{Methodology}
 \par
@@ -874,11 +875,71 @@ In the future the three-layered learning algorithm can be further developed and 
 
 \chapter{Fully Automated Noise Supression}
 
+Since the algorithm introduced in the previous chapter had difficoulties when processing noisy or cluttered data two noise supression techniques are introduced now.
+In this chapter a fully-automated in the following one a semi-automated approach is proposed.
+Similar to the previous method the main goal is to distinguish between noise and pattern, but this time instead of finding pattern regardless the noise, the noise is suppressed first and the information is enhanched afterwards.
+\par
+To be able to compare the the proposed methods more easily, the structure of this chapter is the same as the previous one.
+The methodology is discussed first, afterwards implementation details are given, finally the results are examined and evaluation of the method is discussed.
+
 \section{Methodology}
+\par
+The method proposed in this chapter has three main steps, first the noise is supressed, after that the shoeprint pattern is enhanced and the result image is generated lastly by thresholding.
+The flowchart of the entire algorithm is shown on Figure \ref{fig:fans:workflow}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{4/flow.jpg}
+  \caption{The workflow of the fully automated workflow algorithm.}
+  \label{fig:fans:workflow} % \label has to be placed AFTER \caption (or \subcaption) to produce correct cross-references.
+\end{figure}
+
+\par
+The first part of the algorithm is responsible for noise suppression.
+Since there is little research done on enhancement of real-life forensic images two filters proven to be effective in noise elimination are combined.
+As Li et al. \cite{li2014rapid} state, Wiener filter is among the most popular techniques in the topic of noise reduction, the filter is however not able to reconstruct the signal data it only supresses the noise component.
+Wiener filter works in the signal domain, where it estimates the original image based on the cluttered input. 
+The filter is given by following Equation \cite{Win}:
+\[ G(u, v) = \frac{H^*(u,v) P_s(u, v)}{\mid H(u,v)\mid ^2 P_s (u, v) + P_n (u, v)}  \]
+where $H(u,v)$ stands for the Fourier transform of the point-spread function, $P_s (u,v)$ denotes the power transform of the signal, which is the Fourier Transform of the signal autocorrelation and $P_n(u,v)$ expresses the power spectrum of noise, which is the the Fourier Transform of the noise autocorrelation.
+The performance of the filtering strongly depends on the quality of $P_s$, on the estimated appearance of the original image.
+In this method it is estimated based on the input image.
+The other method used for noise suppression is Bilateral Filtering as proposed in \cite{huang2013self} and in \cite{zhang2016simultaneous}.
+Similar to the Wiener Filter Bilateral Filter is also used for smoothing the image, but since it considers the weighted average of neighboring pixels it preserves the edge information which is crucial to prevent blurring on the shoeprint pattern as well. 
+When both images are calculated the difference of those two images is propagated.
+In this way the blurring effect is strengthened in the background while the outlines of the shoeprint patterns are preserved.
+\par
+For enhanchement Successive Mean Quantization Transform (SMQT) \cite{nilsson2013smqt} is used as proposed by Katireddy et al. \cite{katireddy2017novel}.
+SMQT is recursive algorithm which splits the data into two parts in every level depending on the current data value beeing smaller or bigger than the mean of the given data part.
+In this way the structure of the data is exposed.
+Everytime the image is separated into two parts, it is noted first which pixel is under (0) and which one is above (1) the current mean.
+The algorithm then recurseviely continues on both subgroups of the images, splitting and noting the relative pixel value again.
+Note that the pixels in the same subgroup does not have to be neighboring, the lustering is solely based on the illumination value.
+The recursion stops if the predefined depth is achived.
+To finish the transformation the noted cluster position values of the pixels are examined.
+Along the levels of the recursion a sequence of ones and zeros are registered for every pixels.
+As a last step this sequence is considered as a binary number and after converting into decimal value it is updated as the intensity of the corresponding pixel.
+\par
+The last part of the application is the postprocessing step where the input is converted into a binary image and small inconsistencies and remaining noise are eliminated.
+When binarizing footprint images Otsu's technique \cite{algarni2008novel}, \cite{alizadeh2017automatic}, \cite{wu2019crime} or adaptive thresholding \cite{wang2014automatic} is used most frequently.
+However in the proposed enhancement approach Niblack Binarization Method (NBM) \cite{niblack1985introduction} is preferred.
+NBM is a local thresholding method and it can be calculated as follows \cite{saxena2019niblack}:
+\[T_d = m(x,y) + k * s(k, y)\]
+where $m$ and $s$ stands for mean and dtandard deviation in the given area respectively and $k$ is a configuration variable which is given manually. 
+There are several publications available \cite{som2011application}, \cite{athimethphat2011review}, which prove that global methods, such as Otsu Thresholding \cite{otsu1979threshold}, is less fasible as their local counterparts.
+Although the studies mentioned were carried out on text documents with varying image quality, the two domains can be considered as familiar since they both aim to find fine line structures on a cluttered background.
+Furthermore, Saxena et al. \cite{saxena2019niblack} also state that NBM is one of the most powerful thresholding method, outperforming the global and some local tecniques as well. 
+There is however one disadvatage of local binarization and that is local window size.
+Since for every subwindow a new threshold is calculated NBM tends to generate lt and pepper noise on more homgenous, e.g. background, area.
+For that reason two other postprocessing methods are also implemented.
+The first one eliminates short lines on the image, based on the assumption that the actual shoepattern outlines are recognized and they build bigger, coherent edges.
+The second algorithm is also stand on the same principle, from the remaining lines are all open structures eliminated unless the length is higher than a given threshold bigger than in the previous step.
 
 \section{Implementation}
 
 \section{Evaluation}
+
+Chatterjee et al. \cite{chatterjee2011patch} proposed a method  which represents the estimated image based on geometrically and photometrically similar regions.
 
 \chapter{Semi-Automated Noise Supression}
 
