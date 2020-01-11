@@ -900,9 +900,9 @@ if LBPdenoising :
     # cv.destroyAllWindows()
 
 if (firstVersionPreprocessing) :
-    name = '00241'
+    name = '00021'
     img = cv.imread('C:/Users/rebeb/Documents/TU_Wien/Dipl/FID-300/FID-300/FID-300/test_images/results/images/orig/' + name + '.jpg', 0)
-    path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/project/vutinfth-master/vutinfth-master/graphics/4/241/"
+    path = "C:/Users/rebeb/Documents/TU_Wien/Dipl/project/vutinfth-master/vutinfth-master/graphics/4/21/"
 
     cv.imwrite(path + name + '.jpg', img)
     cv.imwrite(path + name + '_orig_small.jpg', img[0:50,0:50])
@@ -925,7 +925,7 @@ if (firstVersionPreprocessing) :
     # img_med5 = img - median5
     # img_med9 = img - median9
     #
-    bi5 = filters.bilateralFilter(img.copy(), 5)
+    bi5 = filters.bilateralFilter(img.copy(), 9)
     # bi9 = filters.bilateralFilter(img.copy(), 9)
     # img_bi5 = img - bi5
     # img_bi9 = img - bi9

@@ -890,7 +890,7 @@ The flowchart of the entire algorithm is shown on Figure \ref{fig:fans:workflow}
 \begin{figure}[h]
   \centering
   \includegraphics[width=\textwidth]{4/flow.jpg}
-  \caption{The workflow of the fully automated workflow algorithm.}
+  \caption{The workflow of the fully automated noise suppression algorithm.}
   \label{fig:fans:workflow} % \label has to be placed AFTER \caption (or \subcaption) to produce correct cross-references.
 \end{figure}
 
@@ -951,7 +951,7 @@ The original image is processed separatly with Wiener and Bilateral Filter.
 To apply the Wiener Filter correctly the input image is normalized first for the range of 0 to 1.
 For the Point Spread Function an image of size 5x5 is set.
 The balance parameter is 1100 which sets the ratio between information adequcy and prior adequcy, those parameters control frequency increment and decrement respectively.
-The kernel size onf the Bilateral Filter is the same as for Wiener Filter, 5x5.
+The kernel size onf the Bilateral Filter is 9x9.
 When both filtered images are calculated their difference is determined and propagated to the enhancement step of the algorithm.
 \par
 For SMQT calculation, for save time, a speeded up version is implemented.
@@ -982,7 +982,7 @@ The manually set depth of the recursion is 8, in this way when the final binary 
 \end{figure}
 \par
 In the last step the image is thresholded according to NBM.
-The window size is the same as the size of the filter kernels, 5x5.
+The window size is the same as the size of the Winwe Filter, 5x5.
 Furthermore the regularization parameter $k$ of NBM is set to 0.5.
 After that short and non-long edges are eliminated.
 The connected components of the image are extrcted first considering 8-neighborhood.
@@ -995,8 +995,254 @@ If an open line structure is found which overall lengths is smaller than a manua
 This threshold is set to be 60 during the whole experiment.
 
 \section{Evaluation}
+\par
+In the following section the experimental results are presented.
+Furthermore the performance and the usability of the proposed algoritm is also discussed.
+Figures \ref{fig:fans:denoise} and \ref{fig:fans:enhance} the output of the proposed algorithm on every stages and presents the final results as well.
+\par
+Figure \ref{fig:fans:denoise} shows the output of the denoising pipeline on three example images from the FID-300 database.
+In the second column the Wiener filtered images are shown, in the third one the Bilateral filtered images whereas the differene etween those two images is in the las row.
+Considering the background of the algorithms and the amount of noise on the images only a light smoothing is done in the denoising phase.
+This decision was made to protect the valuable pattern information.
+Since no previous knowledge is available abot the properties of shoeprint, no agressive filter kernel is used to make sure that the relevant information is preserved correctly.
+On the combined image a bright silhoutte around the shoeprint image is visible, which was created by the Wiener filter.
+This feature is exploited in a later stage of the algorithm, where an edge sensitive binarization method is used.
 
-Chatterjee et al. \cite{chatterjee2011patch} proposed a method  which represents the estimated image based on geometrically and photometrically similar regions.
+\begin{figure}[h]
+
+\subfloat{
+  \centering
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/241/00241.jpg}
+    \subcaption{Example image}
+    \label{fig:fans:241:orig}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/241/00241_wiener.jpg}
+    \subcaption{Wiener filtered image}
+    \label{fig:fans:241:wiener}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/241/00241_bi5.jpg}
+    \subcaption{Bilateral filtered image}
+    \label{fig:fans:241:bi}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/241/00241_denoise.jpg}
+    \subcaption{Denoised image}
+    \label{fig:fans:241:denoise}
+  \end{subfigure}
+  \label{}
+}
+
+\subfloat{
+    \centering
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/235/00235.jpg}
+    \subcaption{Example image}
+    \label{fig:fans:235:orig}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/235/00235_wiener.jpg}
+    \subcaption{Wiener filtered image}
+    \label{fig:fans:235:wiener}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/235/00235_bi5.jpg}
+    \subcaption{Bilateral filtered image}
+    \label{fig:fans:235:bi}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/235/00235_denoise.jpg}
+    \subcaption{Denoised image}
+    \label{fig:fans:235:denoise}
+  \end{subfigure}
+}
+
+\subfloat{
+  \centering
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/21/00021.jpg}
+    \subcaption{Example image}
+    \label{fig:fans:21:orig}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/21/00021_wiener.jpg}
+    \subcaption{Wiener filtered image}
+    \label{fig:fans:21:wiener}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/21/00021_bi5.jpg}
+    \subcaption{Bilateral filtered image}
+    \label{fig:fans:21:bi}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/21/00021_denoise.jpg}
+    \subcaption{Denoised image}
+    \label{fig:fans:21:denoise}
+  \end{subfigure}
+}
+
+\caption{Example for the results of the denoising stage}
+\label{fig:fans:denoise}
+
+\end{figure}
+
+\par
+The second step of the algorithm is enhancement where SMQT is applied, and the results are shown on Figures \ref{fig:fans:241:enhance}, \ref{fig:fans:235:enhance} and \ref{fig:fans:21:enhance}.
+The benefit is the SMQT algorithm is ambiguous.
+On the one hand focusing on the middle area of Figures  \ref{fig:fans:241:enhance} and \ref{fig:fans:235:enhance} the difference between fore- and background is bigger than on the original image.
+The contours of the shoeprint are more outstanding than on the original image.
+Furthermore the halo effect is also more visible than on the output of the previous sage of the algorithm.
+Comparing Figure \ref{fig:fans:235:enhance} to Figure \ref{fig:fans:21:denoise}, the shoepattern structures got darker and there is a brighter area around the contours than on Figure \ref{fig:fans:21:denoise}.
+On the other hand not only the information but also the remaining noise elements got enhanced by SMQT.
+Even thoug the denoising stage is finished, since only moderate smoothing was applied, there is a considerable noise on the input images for SMQT.
+The soft filtering is able to cope with Gaussian noise like on Figure \ref{fig:fans:241:denoise} but it does not eliminate bigger clutter particles like on the left side of Figure \ref{fig:fans:235:denoise} or on the upper region of Figue \ref{fig:fans:21:denoise}.
+The SMQT enhancement makes those clutter more obvious by increasing the color difference between the noise and the homogenous background, for example the already mentioned patches on the left side of Figure \ref{fig:fans:235:denoise} are now more visible than on the original image \ref{fig:fans:235:orig}.
+Additionally SMQT has similar effect like Histogram Equalization, the background on Figure \ref{fig:fans:241:denoise} is near homogenous, but after applying SMQT its color changes are more obvious since the original pixel values are mapped now to a wider color range.
+
+\begin{figure}[h]
+
+\subfloat{
+  \centering
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/241/00241.jpg}
+    \subcaption{Example image}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/241/00241_enhnace.jpg}
+    \subcaption{Enhanced image}
+    \label{fig:fans:241:enhance}
+  \end{subfigure}
+ \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/241/00241_threshold.jpg}
+    \subcaption{Binarized image}
+    \label{fig:fans:241:bin}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/241/00241_result.jpg}
+    \subcaption{Output image}
+    \label{fig:fans:241:out}
+  \end{subfigure}
+}
+
+\subfloat{
+    \centering
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/235/00235.jpg}
+    \subcaption{Example image}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/235/00235_enhnace.jpg}
+    \subcaption{Enhanced image}
+    \label{fig:fans:235:enhance}
+  \end{subfigure}
+ \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/235/00235_threshold.jpg}
+    \subcaption{Binarized image}
+    \label{fig:fans:235:bin}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/235/00235_result.jpg}
+    \subcaption{Output image}
+    \label{fig:fans:235:out}
+  \end{subfigure}
+}
+
+\subfloat{
+  \centering
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/21/00021.jpg}
+    \subcaption{Example image}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/21/00021_enhnace.jpg}
+    \subcaption{Enhanced image}
+    \label{fig:fans:21:enhance}
+  \end{subfigure}
+ \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/21/00021_threshold.jpg}
+    \subcaption{Binarized image}
+    \label{fig:fans:21:bin}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/21/00021_result.jpg}
+    \subcaption{Output image}
+    \label{fig:fans:21:out}
+  \end{subfigure}
+}
+
+\caption{Example for the results of the enhancement and postprocessing stage}
+\label{fig:fans:enhance}
+
+\end{figure}
+
+\par
+The closing step of the algorithm is postprocessing, consisting of binarization (the thrid column of Figure \ref{fig:fans:enhance}) and line-clutter elimination (in the fourth column of Figure \ref{fig:fans:enhance}).
+As expected NBM is able to take advantage on the halo effect and finds the shoepattern correctly. 
+On all three images, Figure \ref{fig:fans:241:bin}, Figure \ref{fig:fans:235:bin} and Figure \ref{fig:fans:21:out}, the contours of the patterns are clearly visible.
+However, the drawbacks of NBM and the enhanced noise by SMQT are evident, since among the correct outline edges a high amount of noise is generated.
+For that reason the closing step of short line and open line structure elimination is executed.
+On Figures \ref{fig:fans:241:out} and \ref{fig:fans:235:out} the majority of background is cleared up and the shoeprint pattern is showed correctly.
+On the other hand on Figure \ref{fig:fans:21:out} the original pattern is not recognizable anymore, along with the background noise relevant contour edges were also eliminated, and noise lines attached to the shoeprint pattern were kept.
+\par
+This presented results of the fully-automated noise suppression algorithm indicate two things.
+First NBM with the current postprocessing tecnique works better on samples with fine lines, Figure \ref{fig:fans:241:orig}, and with detailed small structures, Figure \ref{fig:fans:235:orig}.
+As already discussed and shown NBM tends to generate line noise on homogenous areas, if the shoeprint consist of dense pattern, there is no big, homogenous background between the different structure elements thus no noise is generated.
+Additionally the heuristics which the two postprocessing steps are based on do not apply on every samples on the database.
+On Figure  \ref{fig:fans:21:bin} even though there is a high amount of noise the pattern is clearly recognizable whereas on Figure \ref{fig:fans:21:out} no shoeprint can be seen anymore.
+This implies that the settings of the line elimination algorithms are not correct and that further postprocessing is needed
+Several pattern edges were eliminated because they were too short.
+The threshold for line length were not changed during testing, thus a possible solution for the problem is to always adjust the parameter according to the current image.
+This adjustment is however difficult since there is no a-priori knowledge about the sample available.
+Alternatively looking to Figure  \ref{fig:fans:21:out} the outlines of the pattern were found originally, but becuase of noise they were not connected.
+In the application 8-neighborhood is considered, but the connectivity-criteria can be extended.
+But this causes more connectivity among noise as well.
+Furthermore it also magnifies the second problem occuring on Figure \ref{fig:fans:21:out}, that noise lines are connected to the contours, thus are not eliminated.
+An additional postprocessing step is needed to examine the remaining edges and determine which connection was made unintenionally.
+\par
+Second, Figures \ref{fig:fans:235:out} and \ref{fig:fans:21:out} show that the performance of fully-automated noise suppression algorithm strongly depends on the quality of the input image.
+This algorithm has a similar limitation like the modified three-layered learning approach proposed in the previous chapter.
+Initially the filter settings of the denoising step are not able to handle cluttered noise seen on Figures \ref{fig:fans:235:orig} and \ref{fig:fans:21:orig}.
+Chatterjee et al. \cite{chatterjee2011patch} proposed a method which represents the estimated image for Wiener filter based on geometrically and photometrically similar regions.
+Even though their approach had promising results, it was tested on data with Gaussian noise and not with irregular cluttered noise seen on the majority if FID-300 images.
+Later, in the enhancement step not only the information but the remaining noise elements are also enhanced.
+Lastly, during binarization an extensive amount of noise is generated which is  not eliminated perfectly afterwards.
+Saxena et al. \cite{saxena2019niblack} analyse several improvements for NBM to make it more robust and performant in poor conditions.
+But based on the experiments presented in this section image quality and high noise ratio is a major limitation of the method.
+
+\par
+Furthermore, the test images showed in this chapter are highquality samples compared to other members of the FID-300 database.
+The evaluation of the modified three-layered feature learning algorithm and the fully-automated noise supression method show that these approaches are not able to overcome the limitation of the high amount of varying clutter on the sample images.
+The second algorithm showed promissing results in ideal and very low quality in poor conditions, whereas the first one delivered average results regardless the initial properties of the input image.
+Furthermore it also has to be mentioned that both algorithms were tested on high or middle quality samples, images with poor shoeprints or high noise ratio like on Figure \ref{fig:rw:lowFID} were excluded during evaluation.
+To be able to process those kind of images as well, additional knowledge about the input is needed.
+For that reason a semi-automated algorithm is introduced next.
+Since the modified three-layered feature learning algorithm is able to make an approximate estimation about the location of pattern, information about the noise is collected to successfully enhance the shoeprint impressions.
 
 \chapter{Semi-Automated Noise Supression}
 
