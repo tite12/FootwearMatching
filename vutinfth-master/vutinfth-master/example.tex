@@ -930,12 +930,69 @@ There are several publications available \cite{som2011application}, \cite{athime
 Although the studies mentioned were carried out on text documents with varying image quality, the two domains can be considered as familiar since they both aim to find fine line structures on a cluttered background.
 Furthermore, Saxena et al. \cite{saxena2019niblack} also state that NBM is one of the most powerful thresholding method, outperforming the global and some local tecniques as well. 
 There is however one disadvatage of local binarization and that is local window size.
-Since for every subwindow a new threshold is calculated NBM tends to generate lt and pepper noise on more homgenous, e.g. background, area.
+Since for every subwindow a new threshold is calculated NBM tends to generate salt and pepper noise on more homgenous, e.g. background, area.
 For that reason two other postprocessing methods are also implemented.
 The first one eliminates short lines on the image, based on the assumption that the actual shoepattern outlines are recognized and they build bigger, coherent edges.
 The second algorithm is also stand on the same principle, from the remaining lines are all open structures eliminated unless the length is higher than a given threshold bigger than in the previous step.
+It is based on the observation, that if the complete structure of a pattern element is found, since NBM concentrates on the contours, a closed line structure is extracted.
+When there is no pattern element in a NBM subwindow only the edges of remaining clutter and binarization artifacts are generated.
+Since those lines are most likely not closed, they are deleted.
+It is however still possible, that an open line structure is generated if only parts of the shoeprint are classified correctly.
+For that reason not every open edge, only a subgroup of them, which are shorter than a threshold, is eliminated.
 
 \section{Implementation}
+\par
+Implementation details and parameter settings are discussed  in the followings.
+The programming tools are similar to the ones in the previous chapter Python 2.7 \cite{van1995python} with OpenCV 4.1.1 \cite{opencv_library} were used for development.
+Since all methods presented in this thesis all prototypical applications, the parameter settings were determined experimentally.
+\par
+At the start of the application the input image is read and frowarded to the denoising stage.
+The original image is processed separatly with Wiener and Bilateral Filter.
+To apply the Wiener Filter correctly the input image is normalized first for the range of 0 to 1.
+For the Point Spread Function an image of size 5x5 is set.
+The balance parameter is 1100 which sets the ratio between information adequcy and prior adequcy, those parameters control frequency increment and decrement respectively.
+The kernel size onf the Bilateral Filter is the same as for Wiener Filter, 5x5.
+When both filtered images are calculated their difference is determined and propagated to the enhancement step of the algorithm.
+\par
+For SMQT calculation, for save time, a speeded up version is implemented.
+In the first step a table of occuring values on the image is created where the zeroth column corresponds the pixel value of 0, the first column stands for pixel value of 1 and so on.
+In the first row of the table the frequency of the given value is noted, that is the number of pixels having the value which the column corresponds with.
+In the second row the sum of frequencies up to the current column is stored.
+The third row represents the sum of all elements until the given column.
+This table eases the calculation of mean value for every level of the SMQT algorithm.
+Additionally, since the enties are ordered, if the subgrouping starts, the values belonging to the same cluster will be neighboring columns.
+Figure \ref{fig:fans:table} shows the frist 14 colums of the occurancy map of an example image.
+When the occaurancy map is ready the recursion starts, the mean of the given subgroup is determined and splitted into two parts according to the pixel value of the given column beeing bigger or smaller than the mean value. 
+Every column of the table have a binary code which is created during the recursion.
+In the first level the first digit of the code is written, in the second level the second digit etc. the length of this code is the same as the predefined depth of the recursion.
+If a pixel value is smaller or equal to the calculated mean of the given cluster a zero is written in the belonging binary code, and a 1 is recorded if it is bigger.
+The manually set depth of the recursion is 8, in this way when the final binary codes are converted to a decimal number a range of 0 to 255 is covered.
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.09\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/21/00021.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.9\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{4/table.jpg}
+  \end{subfigure}
+  \caption{The first 14 columns of the occurancy map. The header of the table represents the possible pixel values. }
+  \label{fig:fans:table} % \label has to be placed AFTER \caption (or \subcaption) to produce correct cross-references.
+\end{figure}
+\par
+In the last step the image is thresholded according to NBM.
+The window size is the same as the size of the filter kernels, 5x5.
+Furthermore the regularization parameter $k$ of NBM is set to 0.5.
+After that short and non-long edges are eliminated.
+The connected components of the image are extrcted first considering 8-neighborhood.
+After that every component is examined on their size and if they are smaller than a given threshold they are deleted.
+It is possible to set the threshold to the average size of every regions, however experimental results show that a such high criterion eliminate shoepattern lines as well.
+For that reason a manually set threshold is used, which is set to 50 for every test images.
+The short line elimination algorithm is applied on both the fore- and on the background on the image.
+Lastly the remaining components are examined on ther openness.
+If an open line structure is found which overall lengths is smaller than a manually set threshold it is deleted.
+This threshold is set to be 60 during the whole experiment.
 
 \section{Evaluation}
 

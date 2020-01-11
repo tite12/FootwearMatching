@@ -625,7 +625,7 @@ def eliminateOpenStructures(img) :
             # cv.drawContours(approxImgOpen, contours[i], -1, 255, 1)
             cv.drawContours(approxImgOpen, [approx], -1, 255, 1)
             for contour in contours[i]:
-                if (len(contour) < 30) :
+                if (len(contour) < 60) :
                     for point in contour:
                         openContoursImg[point[1], point[0]] = 255
                 else:
