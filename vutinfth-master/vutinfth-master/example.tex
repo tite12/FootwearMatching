@@ -674,6 +674,7 @@ For that reason a similarity measure is used for all three candidate features, i
 For LBP histogram correlation is used for comparison, for SIFT Brute-Force matcher is applied and for the Fourier-Mellin Transform the similarity measure proposed in \cite{gueham2008automatic} used.
 The correlation coefficient between two Fourier-Mellin descriptors is given by:
 \[ corr(FM_{1},FM_{2}) = \frac{\sum\limits_{m}\sum\limits_{n}(FM_{1mn}-\overline{FM_{1}})(FM_{2mn}-\overline{FM_{2}})}{\sqrt{(\sum\limits_{m}\sum\limits_{n}(FM_{1mn}-\overline{FM_{1}})^2)(\sum\limits_{m}\sum\limits_{n}(FM_{2mn}-\overline{FM_{2}})^2)}}  \]
+\label{FMcorr}
 where $FM_{1}$ and $FM_{2}$ are two Fourier-Mellin Features to compare and $\overline{FM_{1}}$ and $\overline{FM_{2}}$ are the mean values of the corresponding features.
 \par
 At the end of the learning process a descriptor pool is created.
@@ -1245,8 +1246,134 @@ For that reason a semi-automated algorithm is introduced next.
 Since the modified three-layered feature learning algorithm is able to make an approximate estimation about the location of pattern, information about the noise is collected to successfully enhance the shoeprint impressions.
 
 \chapter{Semi-Automated Noise Supression}
+\par
+The prototypical algorithms presented and evaluated in the previous two chapter have shown that high noise ratio and the versitile appearance of clutter is a crucial difficulty in real-life shoeprint enhancement.
+The experiments also indicate that without previous knowledge about either the shoeprint or the noise on the sample it is difficult to distinguish between them.
+Because not only the background but also the foreground has high variability, along disturbing factors like noise on pattern, overlapping and distortions, there is a high changebility between the possible shoeprint on a given shoeprint as well.
+For that reason a semi-automated algorithm is introduced in this chapter, where user input about the background is expected.
+\par
+The structure of this chapter is similar to the two previous ones.
+First the theoretical background and overall design of the proposed method is discussed, after that an overview abot the implementation is given and finally the results are evaluated briefly.
 
 \section{Methodology}
+\par
+The algorithm proposed in this chapter has two main steps, first the background and foreground is separated and after that the foreground is enhanced.
+There is also one precondition when starting the application, the user has to select a pixel in the background area where no pattern information, so foreground, is in the neighboring area.
+The full pipeline is shown on Figure \ref{fig:sans:workflow}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{5/flow.jpg}
+  \caption{The workflow of the semi-automated noise suppression algorithm.}
+  \label{fig:sans:workflow} % \label has to be placed AFTER \caption (or \subcaption) to produce correct cross-references.
+\end{figure}
+
+\par
+Based on the user input the background area is determined according to the Fourier-Mellin Transform \cite{sheng1986circular}.
+Fourier-Mellin Transform is a scale, rotation and translation invariant feature descriptor and is calculated according to the following Equation \cite{kazik2011visual}:
+\[\mathcal{M}_f(u,v) = \frac{1}{2\pi} \int_{0}^{\infty}\int_{0}^{2\pi} f(r, \theta)r^{-ju}e^{-jv\theta}\mathrm{d}\theta\frac{\mathrm{d}r}{r}\]
+where $u$ and $v$ are the Mellin and the Fourier transform parameter respectively.
+If the same image is translated the Fourier-Mellin Transform does not change, that is however not the case when the image is scaled or rotated.
+In both scenarios phase shift appears on the feature descriptor and the magnitude is also changes according to scaling factor.
+Because of that feature descriptor is converted to Log-Polar corrdinates, so that said  image tranformations occur as simple translation in the descriptor.
+Log-Polar Transform is used to achive robustness against scale and rotation.
+The Log-Polar coordinates of any point with Cartesian coordinates is given by \cite{sarvaiya2012image}:
+\[(\rho,\theta) = (\sqrt{(x-x_c)^2 - (y-y_c)^2}, \tan^{-1}\frac{y-y_c}{x-x_c})\]
+where $x$ and $y$ are the Cartesian coordinates of the point and $x_c$ and $y_c$ are the center coordinates of the input image.
+The Log-Polar coordinates represent the radial distance, $\rho$, and the angle from the center, $\theta$.
+This conversion is illustrated on Figure \ref{fig:sans:logPol} as well.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{5/logPol.jpg}
+  \caption{Illustration of the relation between Log-Polar and Cartesian corrdinates \cite{sarvaiya2012image}}
+  \label{fig:sans:logPol} % \label has to be placed AFTER \caption (or \subcaption) to produce correct cross-references.
+\end{figure}
+
+\par
+Fourier-Mellin features were already used for shoeprint description in both synthetic \cite{gueham2008automatic} and real \cite{wu2019crime} datasets, in this algorithm however it is used for noise description.
+This decision is based on the observation, that although the noise varys among samples, there are dominant features, which describe the majority of the clutter, on a large part of the testing images.
+Even though there are common properties in the apperanace of noise within one image, it also has an irregular structure by definition.
+To prepare the descriptor for that variance three-different sized samples are extracted around the point determined by user input.
+The Fourier-Mellin descriptors of the three subimages represent the noise, after that every pixel of the input is examined for correspondence with the same metric defined in Chapter 3 \ref{FMcorr}.
+The calculated similarities are stored in correspondence map which is binarized by Otsu's method afterward.
+Otsu thresholding is proven to be effective in all three kind of data, synthetic \cite{algarni2008novel}, \cite{alizadeh2017automatic}, restricted \cite{kong2014novel} and also on real forensic datasets \cite{wu2019crime}.
+To complete the background mask morphological operations are used to eliminate small holes and rough contours as proposed in many approaches also for shoeprint identification \cite{wang2014automatic}, \cite{kong2014novel}, \cite{li2014retrieval}, \cite{tang2010footwear}.
+\par
+After the background mask is generated the foreground of the image is enhanced in three main steps.
+Noise on the shoeprint pattern is suppressed first, afterwards the edge information is extracted and the binary images is generated lastly.
+Wavelet transform is often used for natural image denoising \cite{xu2016image}, \cite{sugamya2016image}, for fingerprint \cite{li2012texture} and for shoeprint impression enhancement \cite{katireddy2017novel} as well.
+During wavelet transform the image is decomposed into subbands, and the subimages are processed separately.
+Assuming four subbands, the LL image contains the edge information and the other ones the intensity values.
+Depending on the properties of noise the image clutter can be separated from the information and suppressed on the corresponding sub-band.
+After that the image is reconstructed by inverting the descomposition process.
+The same principle is used in this thesis but instead of wavelet transform simple Fourier transform is applied.
+When the background is separated a model about the appearance of the noise is built.
+Processing the foreground area and the created noise model with Discrete Fourier Transform, a signal domain representation  of both images is created.
+The noise is eliminated by substracting the noise frequencies from the foreground frequencies and inverting the resulting image with the Inverse Fourier Transform.
+\par
+For line extraction a gradient based method prposed by Zeng et al. \cite{zeng2011region} is used.
+They propose a region based non-local means algorithm to denoise natural images.
+They cluster the pixels on the image according to the eigenvaues of the tensor matrix given by \cite{zeng2011region}:
+\[T_\sigma = 
+\begin{pmatrix}
+t_{11} & t_{12} \\
+t_{12} & t_{22}
+\end{pmatrix}
+=
+\begin{pmatrix}
+G_\sigma*(g_x(i,j))^2 & G_{\sigma}*g_x(i, j)g_y(i, j)\\
+G_{\sigma}*g_y(i, j)g_x(i, j) & G_{\sigma}*(g_y(i, j))^2
+\end{pmatrix}
+\]
+
+where $g_x$ and $g_y$ represent the gradient information in the corresponding directions and $G_\sigma$ is the Gaussian kernel having $\sigma$ as standard deviation.
+The eigenvalues of $T_\sigma$ are then given by \cite{zeng2011region}:
+\[\lambda_1 = \frac{1}{2}(t_{11} + t_{22} + \sqrt{(t_{11}-t_{22})^2 + 4t_{12}^2})\]  
+\[\lambda_2 = \frac{1}{2}(t_{11} + t_{22} - \sqrt{(t_{11}-t_{22})^2 + 4t_{12}^2})\]  
+
+The classification is based on the difference between the two eigenvalues of the given pixel.
+If the difference is small it indicates smooth region, whereas a higher value implies edge area.
+The proposed classification strategy is the following \cite{zeng2011region}:
+\[
+(i, j)\in \left\{
+                \begin{array}{ll}
+                  c_1, if \lambda(i,j) \leq \lambda_{min} + \frac{1(\lambda_{max} - \lambda_{min})}{n}\\
+                  c_2, if \lambda(i,j) \leq \lambda_{min} + \frac{2(\lambda_{max} - \lambda_{min})}{n}\\
+				... \\
+                   c_n, if \lambda(i,j) \leq \lambda_{min} + \frac{n(\lambda_{max} - \lambda_{min})}{n}
+                \end{array}
+              \right.
+\]
+
+where $\lambda_{min}$ and $\lambda_{max}$ stays for the minimum and maximum difference on the eintire image.
+For denoising the mean illumination value of pixels in the same class is calculated and the original pixel value is replaced with the average of the cluster.
+Zeng et al. \cite{zeng2011region} propose an additionl weighting scheme as well, so that pixels in the same class with smaller geometrical distance have a higher weight than those further away on the image while determining the mean.
+The region based non-local means algorithm was originally developed for noise removal on natural images but it is also applicable for line extraction on shoeprint impressions.
+Since the classification is made based on the gradients, edge properties are the essential clustering criteria.
+Assuming that both the shoeprint pattern and the remaining noise on the image have common properties which are different to each other, pattern and noise classes are created at the end of the custering.
+The weighting method is however skipped in this implementation, geometrical location is not relevant in this use-case for two reasons.
+First the size of the region the image was taken of is most likely smaller than in case of natural images.
+Second, the shoeprint impressions are 2 Dimensional images in their original form as well. 
+Since there is no depth difference within the image, the entire area can be considered as one connected region unlike on natural images where the objects in the foreground and the background do not necessarily belong together.
+On the other hand an other criteria is added to the clustering algorithm.
+After determining the classes if one or more groups have more members than a given threshold, histogram equalization is applied on the image where the differences of gradients are stored.
+This optimization is needed to make the classes representative and to lower the chance, that pattern and noise edges are assigned to the same cluster. 
+\par
+To find  the cluster with the noise edges a simple heuristic is defined.
+Since the line clustering algorithm is applied on the entire image, not only on the foreground, the class with the highest amount of members is eliminated.
+This decision is based on the assumption that noise is found on the entire image, whereas pattern edges are located only on given areas.
+Furthermore it is also assumed that unlike to shoeprint contours, where the edge properties change according to the original shoeprint structures and pressure, the noise have similar appearance on the whole sample.
+After that the image is binarized with the adaptive thresholding tecnique \cite{laine1996multiscale} popular in both fields of shoeprint recognition  \cite{wang2014automatic}, \cite{li2014retrieval} and also of natural image processing \cite{xu2016image}.
+Adaptive thresholding is a local binarization technique similar to NBM, generating multiple thresholds for every subregion of image.
+\par
+The closing step is postprocessing, where small discontinuities and remaining noise are eliminated.
+Depite in the previous step noise edges belongig to the biggest class were eliminated, other noise lines assigned to different classes are still part of the image.
+Furthermore since adaptive thresholding is local tecnique it has similar drawback as NBM, and it generates unnecessary thresholds on homogenous areas as well.
+Both problems are solved with short line elimination.
+The region of structures generated by redundant thresholds is limited because the binarization criteria is only valid for the given subwindow of the image, thus the overall size is smaller than the predefined window size.
+Remaining noise elimination while preserving the shoepattern is possible because of the assumption that noise consist of cluttered small components whereas the shoeprint is built of bigger, connected structures.
+
 
 \section{Implementation}
 
