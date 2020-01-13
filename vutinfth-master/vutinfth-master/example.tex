@@ -1778,7 +1778,6 @@ In such cases several enhancement steps are not exploited, thus the quality of t
   \label{fig:sans:noise}
 \end{figure}
 
-
 \par
 Based on the evaluations in the last three chapters the semi-automated approach proved to be the most powerful technique from the three proposed algorithms.
 To get a detailed overview about its performance, additional tests are conducted in the following chapter, the results are further discussed.
@@ -1786,6 +1785,63 @@ To get a detailed overview about its performance, additional tests are conducted
 \chapter{Results and Discussion}
 
 \chapter{Future Work}
+\par
+Forensic shoeprint identification is an extensively studied research area \cite{rida2019forensic}, neverteless there are several possibilities for improve our technique.
+One problem of the field is the lack of uniform datasets, in many cases narrow datasets whith low variability and high quality samples were used  \cite{rida2019forensic}.
+Additionally the testing data is not necessarily made public, so no fast comparison between existing approaches is possible.
+\par
+To establish an overview and structure our knowledge in this field three prototypical approaches were introduced in this thesis
+Beeing prototypical approaches there are several ways for improvement.
+The first, most obvious direction is the combination of the three techniques.
+Even though all three methods have different pipelinel applying all of them simultenously on the input data is not impossible.
+Additionally the discussed advantage of one technique can supress the limitation of the other two.
+The semi-automated pipeline is currently the most powerful approach from the introduced one.
+However beeing semi-automated and not being abe to cope with fine line structures is nevertheless a signifificant limitation.
+On the other letting the modified three-layered feature learning algorithm to determine the approximate outline of the pattern, and determining the exact background based on that by the semi-automated method replaces the now necessary user input at the beginning of the application.
+Additionally, the intorduced fully automated method failed on the majority of samples, it only provided reasonable output if the input had high quality and detailed line structure.
+That is however exactly the case that the semi-automated pipeline is not able to handle.
+Enhancing any kind of input data with the semi-automated pipeline, calculating the background mask and applying the non-local means for edge detection, and finishing the calculation with the fully automated approach in case of fine-lined shoeprint pattern can solve this kind of limitation.
+The preprocessing done with the semi-automated method increases the quality that the fully-automated approach needs, and the latter one is able to identifiy the detailed pattern which the semi-automated technique eliminates immediately.
+\par
+Additionally there several approaches in the research available which were not discussed in this work yet.
+Chen et al. \cite{chen2013hierarchical} intorduced a hierarchical voting score for finger- and palmprint identification.
+Wu et al. \cite{wu2019losgsr} also proposed a voting technique for real-life forensic images incorporating the opinion of human experts.
+They defined a manifold ranking method based on the shoeprint identification of forensic specialists.
+Along the judgemnets of the experts the neighborhood and the coefficient matrix of the given sample is also considered to develop a powerful feature descriptor.
+The descriptor is based on the Fourier-Mellin Transform similar to the approaches previously intorduced, thus a combination can be made realtively easily.
+\par
+Voting scores and feature-learning are machine learning techniques but deep learning \cite{lecun2015deep} were not considered either.
+Rida et al. \cite{rida2019forensic} discuss the possibility of using Convolutional Neural Network (CNN) fo
+r end-to-end shoeprint recognition and identification intorduced in \cite{lecun1998gradient}.
+Kong et al. \cite{kong2017cross}, \cite{kong2019cross} already published an approach for taking adventage on CNNs.
+However, instead of using the CNN to identify the given shoeprint they rather extract mid-level features of the network to use them as feature descriptor.
+\par
+In all approaches proposed in this thesis the geometrical location of the extracted features is disregarded, even though it is an imoprtant information while identifying shoeprint impressions.
+Despite that several samples depict only a partial image as soon as there are at least two different patterns or a recognizable outline part of the shoe is visible, assumptions can be made about the geometrical location of the given pattern.
+Li et al. \cite{li2015secondary} propose a subdivision method where four regions of a shoeprint are distinguished, these are cap, sole, arch and heel and processed according to their position.
+Additionally the overall silhoutte os a shoeprint also contains information.
+Wang et al. \cite{wang2014automatic} developed a shoeprint contour model for shoeprint retrival on high-quality sample, which helps to make their approach more robust, since it is able to correct distrotions or noise on the input sample
+\par
+Lastly Randomly Acquired Features (RAC) of shoeprint were already mentined before but were not considered during feature extraction for two reasons.
+First, in this thesis prototypical applications are shown and the main goal is to get a basisc idea about the effectiveness of the published approaches.
+Second, as Rida et al. \cite{rida2019forensic} states in many dataset only a limited amount of samples is available for one shoeprint, and that is also the case in the FID-300 database.
+There are no more than six images from the same shoeprint in exceptional cases, but the majority of the dataset consist of single samples.
+But assuming that with the active research the demand for wider dataset also increases, considering the RAC features of the input provides valuable additional information about the given sample.
+Shor et al. \cite{shor2018inherent} introduce a tecnique to distinguish between the impressions of the same shoe based on the obtained RAC features.
+Damary et al. \cite{damary2018dependence} published a study about the estimated properties of a RAC based on its location of the shoeprint.
+In this way if a RAC is identified assumptions about the neighboring pattern can be made.
+Similar to basic structure description for shoeprints \cite{tang2010footwear} a technique for RAC description was also developed \cite{speir2016quantifying} thus incorporating RAC models into shoeprint descriptors is already possible.
+\par
+Considering the general research done in the topic of shoeprint enhancement there are two connected problems which have to be solved in the future.
+The first one is the already mentioned non-existing uniform database.
+The current practice of using several datasets has several drawbacks.
+The propsed resulst are not meaningful and consequential, since the used datasets are not public in many cases and because the results are not vomparable to other methods.
+Furthermore the real-life preformance and usefulness of the published methods is unknown because they are often tested on synthetic and on handcrafted data.
+The second problem is strongly connected to the lack of uniform database and that is the lack of overview and structured knowledge in the field.
+Rida et al. \cite{rida2019forensic} recently proposed a survey about the research done in the last 20 years and made an overview about the acuracy of the published methods.
+Several authors claimed to have above 99\%, \cite{algarni2008novel}, \cite{alizadeh2017automatic}, \cite{almaadeed2015partial}, or exactly 100\% accuracy, \cite{gueham2007automatic}, on their testing datasets.
+These publication imply that the problem is already solved, and there is no further room for improvment which is obviously not the case.
+Until no central, uniform, high-quality and wide dataset is available no research can be done efficiently, it is not possible to take advantage on the already published approaches and it is difficult to learn from the mistakes previously done.
 
 \chapter{Conclusion}
 
