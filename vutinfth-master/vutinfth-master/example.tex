@@ -22,7 +22,8 @@
 \usepackage{todonotes} % Provides tooltip-like todo notes.
 \usepackage{hyperref}  % Enables cross linking in the electronic document version. This package has to be included second to last.
 \usepackage[acronym,toc]{glossaries} % Enables the generation of glossaries and lists fo acronyms. This package has to be included last.
-
+\usepackage{appendix}
+\usepackage{rotating}
 % Define convenience functions to use the author name and the thesis title in the PDF document properties.
 \newcommand{\authorname}{Rebeka Koszticsak} % The author name without titles.
 \newcommand{\thesistitle}{Enhancement of Footwear Impressions} % The title of the thesis. The English version should be used, if it exists.
@@ -1457,7 +1458,7 @@ Column two and four illustrate the results when the average noise model was used
   \begin{subfigure}[b]{0.19\columnwidth}
     \centering
     \includegraphics[width=\textwidth]{5/21/25_cent.jpg}
-    \subcaption{Enhanced image using average noise model and 20 clusters for gradient classification}
+    \subcaption{Enhanced image using average noise model and 25 clusters for gradient classification}
     \label{fig:sans:21:25_cent}
   \end{subfigure}
 }
@@ -1491,7 +1492,7 @@ Column two and four illustrate the results when the average noise model was used
   \begin{subfigure}[b]{0.19\columnwidth}
     \centering
     \includegraphics[width=\textwidth]{5/25/25_cent.jpg}
-    \subcaption{Enhanced image using average noise model and 20 clusters for gradient classification}
+    \subcaption{Enhanced image using average noise model and 25 clusters for gradient classification}
     \label{fig:sans:25:25_cent}
   \end{subfigure}
 }
@@ -1532,7 +1533,7 @@ Column two and four illustrate the results when the average noise model was used
   \begin{subfigure}[b]{0.19\columnwidth}
     \centering
     \includegraphics[width=\textwidth]{5/174/25_cent.jpg}
-    \subcaption{Enhanced image using average noise model and 20 clusters for gradient classification}
+    \subcaption{Enhanced image using average noise model and 25 clusters for gradient classification}
     \label{fig:sans:174:25_cent}
   \end{subfigure}
 }
@@ -1567,7 +1568,7 @@ Column two and four illustrate the results when the average noise model was used
   \begin{subfigure}[b]{0.19\columnwidth}
     \centering
     \includegraphics[width=\textwidth]{5/204/25_cent.jpg}
-    \subcaption{Enhanced image using average noise model and 20 clusters for gradient classification}
+    \subcaption{Enhanced image using average noise model and 25 clusters for gradient classification}
     \label{fig:sans:204:25_cent}
   \end{subfigure}
 }
@@ -1780,10 +1781,237 @@ In such cases several enhancement steps are not exploited, thus the quality of t
 
 \par
 Based on the evaluations in the last three chapters the semi-automated approach proved to be the most powerful technique from the three proposed algorithms.
-To get a detailed overview about its performance, additional tests are conducted in the following chapter, the results are further discussed.
+To get a detailed overview about its performance, additional tests are conducted in the following chapter, and the results are further discussed.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Results and Discussion}
+\par
+In this chapter the experimental results of the semi-automated approach conducted on a minimal dataset from FID-300 are presented and discussed.
+The testing database consist of 20 images, the selected images and the output of the algorithm are shown in the Appendix \ref{AppA}.
+Whene selecting the testing dataset, no restrictions were made, low quality and heavily cluttered images are also part of the experimental database.
+Since the evaluation in the previous chpater showed that the semi-automated approach is not effective on samples with detailed, fine line structures, those images \ref{appA:204}, \ref{appA:223}, \ref{appA:241} are excluded while testing.
+Furthermore it was mentioned as well that in case of low intensity difference no background estimation is possible. For that reason images \ref{appA:217} and \ref{appA:232} are also disregarded while evaluation.
+\par
+The visual improvment caused by the different algorithms were already discussed in the previous chapters.
+Now the analytical results of the semi-automated method are analyzed based on the performance of three basic feature descriptor
+The goal of the algorithm is shoeprint enhancement and to increase the overall sample quality and not to develop a powerful descriptor or a matching technique.
+Hence for evaluation three basic descriptors were chosen, Fourier-Mellin features, SIFT and SURF are used, which are popular tecniques for shoeprint, fingerprint and for natural image description.
+Fourier-Mellin transform was proposed for shoeprint description several times \cite{gueham2008automatic}, \cite{richetelli2017classification}, \cite{wu2019crime}.
+Along shoeprint description \cite{nibouche2009rotation}, \cite{richetelli2017classification} SIFT is also favored for fingerprint \cite{zhou2011adaptive} and for tattoo identification \cite{yi2015impact}, \cite{han2013tattoo}.
+Although SURF is not common for shoeprint recognition it is popular in related areas such as fingerprint description \cite{jahan2017robust}, tattoo matching \cite{yi2015impact} and natural texture description \cite{prabhakar2012lbp}.
+The evaluation is done by comparing the matching performance of those descriptors on the original samples and on the processed images.
+If the basic descriptors, without embedding in a more complex pipeline, achive higher accuracy on the processed  images than on the original ones, it implies succesful enhancement.
+The experimental results already conducted on the field indicate \cite{rida2019forensic} that using a complex approach increase matching accuracy, however when only one given method is used for evaluation it is not clear if the enhancement is optimized for that specific pipeline or is generally valid.
+Evaluating based on the feature descriptors which are the core parts of many image matching algorithm provides general results on the performance.
+\par
+For matching the extracted features two algorithms are used Brute-Force matching (BF) and Fast Library for Approximate Nearest Neighbors (FLANN).
+BF simply compares a feature from the one image with every other features on the other image and sets the closest one as match, whereas FLANN picks the best matches from the neighborhood, it does not examine all possible feature point so it is faster than BFM.
+The criteria for 'good match' is set to 0.8 while testing.
+For matching the shoeprint samples the Ground Truth images of every member of the minimal database were selected and stored, and it is examined how many 'good matches' were found between the samples and the Ground Truth images.
+At the end of the matching process a ranking among the Ground Truth images is made, the one with the most 'good matches' is the first the one with the second most 'good matches' is the second and so on.
+The ranking of the actual Ground Thruth of the given sample is noted and the final score is made by averaging the noted ranking values  of every image from the testing dataset.
+That means if the belonging Ground Thruth image of every member of the dataset had the most 'good matches', thus the highest ranking, the final score is 1.
+Lower performance is indicated with higher score, correct matching results in lower score.
+\par
+To create a baseline the original samples were matched to the Ground Thruth images \ref{tab:BL}.
+For comparison all four possible outputs of the enhancing algorithm is presented in Tables \ref{tab:25Mean}, \ref{tab:25Cent} and \ref{tab:20Mean}, \ref{tab:20Cent}.
+Table \ref{tab:ov} gives an overview about the overall performance of the discussed pipelines, in the upper side of the rows the calculated average score of both matching techniques is shown like in Tables \ref{tab:25Mean}, \ref{tab:25Cent} and \ref{tab:20Mean}, \ref{tab:20Cent} and \ref{tab:BL}.
+In the lower rows the average score of both matching techniques is used.
+In the last column the average score of all descriptors using both matching techniques is used.
+To understand the performance of the proposed enhancing method this table is analyzed in the followings.
+\par
+Focusing on the first (F-M) anf third (SURF) column of the table, the matching of the enhanced shoeprints always outperforms the original samples regardless the pipeline settings.
+However, considering the second column (SIFT) of the table that is not the case, and the enhanced images are not able to achive the performance of the original images.
+Wang et al. \cite{wang2017manifold} state that SIFT is less effective on binarized images, since it can seek less information about the structure of the image than in the original version.
+On the other hand they also mention that SURF suffers from the same limitation, which is not the case in our experiments.
+Thi contradiction is explainable by examining the working pipeline of SURF, it uses a blob-detector to determine feature points which is suitable for shoeprint identification.
+The majority of shoeprints contain closed structures such as circles or polygons that are easily recognized by a blob-detector.
+Thus even thogh working on a binary image is not ideal for SIFT nor for SURF, the latter is able to overcome its weakness by taking advatage on the specific features of a shoesole pattern.
 
+\begin{minipage}{\linewidth}
+\centering
+\begin{tabular}{ccccccc}
+& \multicolumn{2}{c}{ F-M } & \multicolumn{2}{c}{ SIFT } & \multicolumn{2}{c}{ SURF } \\
+& BF & FLANN & BF & FLANN & BF & FLANN \\
+1 & 12 & 13 & 9 & 4 & 1 & 1 \\
+2 & 4 & 5 & 1 & 3 & 2 & 2 \\
+3 & 5 & 7 & 2 & 1 & 4 & 4 \\
+4 & 5 & 6 & 1 & 1 & 5 & 2 \\
+5 & 6 & 1 & 1 & 1 & 5 & 4 \\
+6 & 6 & 6 & 4 & 6 & 6 & 6 \\
+7 & 6 & 6 & 2 & 8 & 8 & 9 \\
+8 & 3 & 4 & 4 & 3 & 8 & 8 \\
+9 & 2 & 1 & 7 & 4 & 7 & 7 \\
+10 & 9 & 10 & 12 & 9 & 13 & 12 \\
+11 & 2 & 1 & 12 & 13 & 11 & 11 \\
+16 & 6 & 5 & 1 & 1 & 9 & 6 \\
+17 & 1 & 1 & 6 & 5 & 1 & 1 \\
+18 & 13 & 11 & 12 & 7 & 12 & 12 \\
+20 & 8 & 11 & 6 & 4 & 7 & 3 \\
+Score & 5.866666667 & 5.866666667 & 5.333333333 & 4.666666667 & 6.6 & 5.866666667 \\
+\end{tabular}
+\captionof{table}{Baseline results matching the original images with the unprocessed Ground Thruth images}
+ \label{tab:BL} 
+\end{minipage}
+
+
+\begin{minipage}{\linewidth}
+\centering
+\begin{tabular}{ccccccc}
+\multirow{2}{*}{ } & \multicolumn{2}{c}{ F-M } & \multicolumn{2}{c}{ SIFT } & \multicolumn{2}{c}{ SURF } \\
+& BF & FLANN & BF & FLANN & BF & FLANN \\
+1 & 1 & 1 & 2 & 8 & 4 & 9 \\
+2 & 1 & 1 & 11 & 10 & 1 & 2 \\
+3 & 3 & 4 & 1 & 1 & 6 & 7 \\
+4 & 2 & 3 & 8 & 10 & 7 & 8 \\
+5 & 1 & 2 & 5 & 3 & 4 & 4 \\
+6 & 5 & 9 & 2 & 3 & 6 & 8 \\
+7 & 13 & 12 & 13 & 13 & 8 & 8 \\
+8 & 2 & 2 & 12 & 11 & 8 & 8 \\
+9 & 8 & 11 & 13 & 6 & 4 & 4 \\
+10 & 4 & 9 & 7 & 3 & 1 & 1 \\
+11 & 2 & 2 & 6 & 8 & 12 & 11 \\
+16 & 5 & 6 & 1 & 1 & 4 & 6 \\
+17 & 2 & 3 & 7 & 10 & 1 & 2 \\
+18 & 6 & 7 & 1 & 1 & 7 & 2 \\
+20 & 5 & 2 & 4 & 6 & 3 & 2 \\
+Score & 4 & 4.933333333 & 6.2 & 6.266666667 & 5.066666667 & 5.466666667 \\
+\end{tabular}
+\captionof{table}{Results using 25 classes and the average noise model}
+ \label{tab:25Mean} 
+\end{minipage}
+
+
+\begin{minipage}{\linewidth}
+\centering
+\begin{tabular}{ccccccc}
+\multirow{2}{*}{ } & \multicolumn{2}{c}{ F-M } & \multicolumn{2}{c}{ SIFT } & \multicolumn{2}{c}{ SURF } \\
+& BF & FLANN & BF & FLANN & BF & FLANN \\
+1 & 2 & 1 & 5 & 6 & 1 & 1 \\
+2 & 1 & 1 & 2 & 3 & 1 & 2 \\
+3 & 6 & 9 & 1 & 1 & 2 & 5 \\
+4 & 1 & 1 & 8 & 10 & 4 & 2 \\
+5 & 5 & 7 & 1 & 2 & 2 & 3 \\
+6 & 4 & 6 & 1 & 1 & 3 & 3 \\
+7 & 13 & 11 & 13 & 13 & 8 & 8 \\
+8 & 3 & 2 & 12 & 11 & 8 & 8 \\
+9 & 8 & 11 & 13 & 6 & 4 & 4 \\
+10 & 7 & 6 & 10 & 8 & 4 & 2 \\
+11 & 4 & 4 & 9 & 8 & 10 & 5 \\
+16 & 4 & 4 & 2 & 8 & 6 & 7 \\
+17 & 6 & 5 & 5 & 12 & 1 & 2 \\
+18 & 7 & 7 & 3 & 3 & 1 & 1 \\
+20 & 2 & 1 & 12 & 9 & 1 & 1 \\
+Score & 4.866666667 & 5.066666667 & 6.466666667 & 6.733333333 & 3.733333333 & 3.6 \\
+\end{tabular}
+\captionof{table}{Results using 25 classes and the centroids noise model}
+ \label{tab:25Cent} 
+\end{minipage}
+
+\begin{minipage}{\linewidth}
+\centering
+\begin{tabular}{ccccccc}
+\multirow{2}{*}{ } & \multicolumn{2}{c}{ F-M } & \multicolumn{2}{c}{ SIFT } & \multicolumn{2}{c}{ SURF } \\
+& BF & FLANN & BF & FLANN & BF & FLANN \\
+1 & 1 & 1 & 5 & 8 & 3 & 6 \\
+2 & 1 & 1 & 13 & 13 & 3 & 5 \\
+3 & 1 & 2 & 1 & 1 & 5 & 6 \\
+4 & 3 & 5 & 8 & 9 & 1 & 3 \\
+5 & 3 & 7 & 3 & 3 & 1 & 2 \\
+6 & 10 & 13 & 2 & 3 & 7 & 7 \\
+7 & 13 & 12 & 13 & 13 & 8 & 8 \\
+8 & 7 & 9 & 13 & 12 & 4 & 4 \\
+9 & 8 & 11 & 13 & 6 & 4 & 4 \\
+10 & 2 & 5 & 7 & 5 & 1 & 1 \\
+11 & 3 & 2 & 8 & 8 & 10 & 7 \\
+16 & 2 & 2 & 9 & 6 & 5 & 5 \\
+17 & 3 & 2 & 9 & 3 & 1 & 3 \\
+18 & 10 & 9 & 1 & 3 & 10 & 10 \\
+20 & 4 & 4 & 4 & 6 & 2 & 2 \\
+Score & 4.733333333 & 5.666666667 & 7.266666667 & 6.6 & 4.333333333 & 4.866666667 \\
+\end{tabular}
+
+\captionof{table}{Results using 20 classes and the average noise model}
+ \label{tab:20Mean} 
+\end{minipage}
+
+\begin{minipage}{\linewidth}
+\centering
+\begin{tabular}{ccccccc}
+\multirow{2}{*}{ } & \multicolumn{2}{c}{ F-M } & \multicolumn{2}{c}{ SIFT } & \multicolumn{2}{c}{ SURF } \\
+& BF & FLANN & BF & FLANN & BF & FLANN \\
+1 & 2 & 3 & 6 & 7 & 1 & 1 \\
+2 & 1 & 1 & 3 & 4 & 3 & 3 \\
+3 & 1 & 3 & 2 & 3 & 4 & 5 \\
+4 & 1 & 1 & 11 & 9 & 5 & 5 \\
+5 & 3 & 6 & 7 & 5 & 7 & 8 \\
+6 & 8 & 8 & 3 & 3 & 1 & 2 \\
+7 & 13 & 12 & 13 & 13 & 8 & 8 \\
+8 & 7 & 9 & 13 & 12 & 4 & 4 \\
+9 & 8 & 10 & 13 & 6 & 4 & 4 \\
+10 & 7 & 6 & 12 & 9 & 1 & 1 \\
+11 & 1 & 1 & 6 & 8 & 6 & 7 \\
+16 & 4 & 2 & 1 & 3 & 9 & 9 \\
+17 & 5 & 5 & 9 & 9 & 1 & 2 \\
+18 & 5 & 3 & 4 & 2 & 8 & 3 \\
+20 & 6 & 6 & 8 & 10 & 2 & 2 \\
+Score & 4.8 & 5.066666667 & 7.4 & 6.866666667 & 4.266666667 & 4.266666667 \\
+\end{tabular}
+\captionof{table}{Results using 20 classes and the centroids noise model}
+ \label{tab:20Cent} 
+\end{minipage}
+
+\begin{sidewaystable}
+\centering
+\begin{tabular}{cccccccc}
+& \multicolumn{2}{c}{ F-M } & \multicolumn{2}{c}{ SIFT } & \multicolumn{2}{c}{ SURF } & \multirow{2}{*}{ Average Results } \\
+& BF & FLANN & BF & FLANN & BF & FLANN & \\
+Baseline & 5.655555556 & 5.238888889 & 6.027777778 & 5.472222222 & 7.8 & 7.072222222 & \multirow{2}{*}{ 6.211111111 } \\
+& \multicolumn{2}{c}{ 5.447222222 } & \multicolumn{2}{c}{ 5.75 } & \multicolumn{2}{c}{ 7.436111111 } & \\
+25 Average & 4 & 4.933333333 & 6.2 & 6.266666667 & 5.066666667 & 5.466666667 & \multirow{2}{*}{ 5.322222222 } \\
+& \multicolumn{2}{c}{ 4.466666667 } & \multicolumn{2}{c}{ 6.233333333 } & \multicolumn{2}{c}{ 5.266666667 } & \\
+25 Centroids & 4.866666667 & 5.066666667 & 6.466666667 & 6.733333333 & 3.733333333 & 3.6 & \multirow{2}{*}{ 5.077777778 } \\
+& \multicolumn{2}{c}{ 4.966666667 } & \multicolumn{2}{c}{ 6.6 } & \multicolumn{2}{c}{ 3.666666667 } & \\
+20 Average & 5.43912037 & 5.567283951 & 6.634259259 & 5.904320988 & 6.630787037 & 6.111728395 & \multirow{2}{*}{ 6.047916667 } \\
+& \multicolumn{2}{c}{ 5.50320216 } & \multicolumn{2}{c}{ 6.269290123 } & \multicolumn{2}{c}{ 6.371257716 } & \\
+20 Centorids & 4.8 & 5.066666667 & 7.4 & 6.866666667 & 4.266666667 & 4.266666667 & \multirow{2}{*}{ 5.444444444 } \\
+& \multicolumn{2}{c}{ 4.933333333 } & \multicolumn{2}{c}{ 7.133333333 } & \multicolumn{2}{c}{ 4.266666667 } & \\
+\end{tabular}
+\captionof{table}{Overview about the performance of the analyzed pipelines}
+ \label{tab:ov} 
+\end{sidewaystable}
+
+
+
+\par
+Examining the first row of Table \ref{tab:ov}, the best score the originally shoeprint achived is 5.24 (BF matching of Fourier-Mellin features), whereas the worst accuracy is 7.80 (BF matching of SURF features).
+The best accuracy of the baseline is outperformed several times, the Fourier-Mellin features achive better accuracy regardless the matching technique in every cases except when working with 20 classes and average model noise model, where the scores are minimally lower, 5.44 for BF and 6.57 for FLANN.
+The SURF features achive the overall best scores for matching the enhanced images.
+Matching the results produced by using 20 classes and centroids as noise model the score of 4.27 is noted for both matching algorithm.
+But in case of output generated by 25 classes and centroids as noise models a better value of 3.73 and 3.60 is achived.
+Furthermore the worst performance of the baseline algorithm is 7.80, which is outperformed in every testcase.
+The worst score noted for the enhanced image matching is 7.40 which was provided by SIFT BF matching of the samples processed by the setting with 20 classes and using centroid models.
+
+\par
+Considering the overall accuracy (last column) of the different settings, the enhanced matching always provide better results than the baseline.
+Comparing the scores of the enhanced samples to each other the pipeline using only 20 classes and the averaged noise model has the lowes performance.
+Using 20 classes but the centroids for noise representation results in score improvement of above 0.5 points achiving 5.44.
+The best scores were achived by the images where 25 classes were used earning 5.32 and 5.08 points, for average and for centorid noise models respectively.
+These values show that the detailed algorithms lead to higher quality enhancement.
+Using 25 classes outperforms the case when the differences of gradients are grouped into 20 classes.
+Building a more versitile model for noise representation using the centroids of the k-menas algorithm results in better scores than the images enhanced with the average noise model have.
+The fact that both settings using 25 classes outperformed the ones with less classes implies that detailed clustering of extracted edges is more important that the  choice of noise representation in noise suppression step.
+
+\par
+The experimental results presented in this chapter show that the proposed image enhancement algorithm is able to accuracy improvement.
+The preformance of the algorithm were tested on a versitile substet of images selected from the FID-300 dataset.
+Although it has to be noted that the proposed method needs further improvment to be able to hande all possible samples of the FID-300 dataset.
+For known limitations of the algorithm samples with detailed, fine line structures and low contrast between fore- and background were excluded from testing.
+The matching based on the Fourier-Mellin Transform is the most robust one, it outperforms the baseline algorithm never having worse scores than 5.57 and there is only 1.57 difference between the best- and worst case scenarios.
+SURF provides the best score in given cases but it also achives above 6.00 scores multiple times, thus the difference between the best and worst accuracy is above 3.6.
+The robustness and the high-quality of Fourier-Mellin Transform is promissing, since many current shoeprint matching algorithms already use is for feature descripton  \cite{gueham2008automatic}, \cite{richetelli2017classification}, \cite{wu2019crime} or are based on other frequency domain descriptors \cite{algarni2008novel}, \cite{wang2014automatic}, \cite{katireddy2017novel}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Future Work}
 \par
 Forensic shoeprint identification is an extensively studied research area \cite{rida2019forensic}, neverteless there are several possibilities for improve our technique.
@@ -1844,7 +2072,21 @@ These publication imply that the problem is already solved, and there is no furt
 Until no central, uniform, high-quality and wide dataset is available no research can be done efficiently, it is not possible to take advantage on the already published approaches and it is difficult to learn from the mistakes previously done.
 
 \chapter{Conclusion}
-
+\par
+Forensic shoeprint image retrival and identification is an extensively researched topic in the last 20 years.
+A great amount of publications is available and many methods were introduced for best shoeprint pattern recognition.
+However, no structured knowledge is available on this field, thus results are uncertain, the solved and open problems of the topic are unclear and the publications are incoherent.
+Because of the absence of universal, high-quality dataset the algorithms are not comparable, the limitations and strengths of the approaches are unclear and it is ambigouos if they are applicable in rea-life use-cases as well.
+\par
+In 2014 a new databease, called FID-300, was intorduced by Kortylewski et al. \cite{kortylewski2014unsupervised} which is a step in the right direction, containing 300 shoeprint imressions collected on real-life crime scenes.
+In this thesis an overview and introduction to possible ways for real-life shoeprint enhancement was given.
+Based on the available shoeprint recognition litreture and research done in related fileds such as fingerprint and tattoo identification and natural image enhancement, three prototypical algorithms were presented to increase the quality of the real-life samples.
+The first one is based on the idea if feature learning, the second one utilizes a traditonal image enhancement pipeline and the idea between the third one is the calculation of a noise representation model and gradient clustering for relevant edge detection.
+The evaluation shows, that many preprocessing tecniques popular in the current forensic research are not robust and powerful enough to process real-life shoeprint images.
+All three algorithms are able to achive reasonable results on specific samples, however many images with given properties, such as low quality images, overly cluttered shoeprints low-cotrast pictures are crucial limitations of all of them.
+Based on the visual results of all three algorithms the last one is the most robust one.
+The analytical testing conducted on basic image descriptors already used in forensic image identification shows that the enhanced images achive better matching results than the original ones in almost every cases.
+With further development and potential combination of the propsed method a powerful and versitile preprocessing pipeline can be built which is able to enhance real-life shoeprint impressions and thus increase the matching accuracy.
 % Remove following line for the final thesis.
 %\input{intro.tex} % A short introduction to LaTeX.
 
@@ -1870,5 +2112,519 @@ Until no central, uniform, high-quality and wide dataset is available no researc
 % Add a bibliography.
 \bibliographystyle{alpha}
 \bibliography{intro}
+
+\begin{appendices}
+		\chapter{Appendix A}
+		\label{AppA}
+		This section contains the images selected for testing.
+		The samples was chosen from FID-300 and are representative for the database, no restriction were made while selecting the images, low quality images are also part of the experimental setting.
+		In the frist column the original images are shown, in the second and third columns the results using 20 classes for classification of the gradient difference image is visible, whereas in the fourth and fifth column the output with 25 classes is displayed.
+		The results using the mean noise model are in columns two and four, the output using the centroids are in columns three and five.
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00009.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00009_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00009_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00009_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00009_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00017.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00017_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00017_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00017_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00017_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00020.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00020_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00020_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00020_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00020_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00021.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00021_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00021_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00021_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00021_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00025.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00025_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00025_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00025_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00025_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00066.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00066_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00066_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00066_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00066_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00171.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00171_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00171_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00171_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00171_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00174.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00174_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00174_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00174_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00174_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00178.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00178_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00178_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00178_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00178_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00182.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00182_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00182_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00182_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00182_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00197.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00197_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00197_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00197_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00197_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00204.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00204_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00204_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00204_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00204_filtered.jpg}
+  \end{subfigure}
+\caption{}
+  \label{appA:204}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00217.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00217_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00217_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00217_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00217_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\label{appA:217}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00223.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00223_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00223_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00223_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00223_filtered.jpg}
+  \end{subfigure}
+\caption{}
+ \label{appA:223}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00232.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00232_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00232_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00232_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00232_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\label{appA:232}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00233.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00233_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00233_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00233_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00233_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00235.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00235_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00235_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00235_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00235_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00239.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00239_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00239_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00239_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00239_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00241.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00241_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00241_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00241_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00241_filtered.jpg}
+  \end{subfigure}
+	\caption{}
+  \label{appA:241}
+\end{figure}  
+
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/00250.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/mean/00250_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k20/centroids/00250_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/mean/00250_filtered.jpg}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.19\columnwidth}
+    \centering
+    \includegraphics[width=\textwidth]{appA/k25/centroids/00250_filtered.jpg}
+  \end{subfigure}
+\caption{}
+\end{figure}  
+
+\end{appendices}
 
 \end{document}
